@@ -102,6 +102,18 @@
             position: fixed; inset: 0; background: rgba(0,0,0,0.5);
             display: none; z-index: 9999; align-items: center; justify-content: center;
         }
+
+        @keyframes win95-shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+            20%, 40%, 60%, 80% { transform: translateX(6px); }
+        }
+        .win95-shake { animation: win95-shake 0.4s ease-in-out; }
+        
+        #win95-alert-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4);
+            display: none; z-index: 10000; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body class="p-2 md:p-4">
@@ -112,6 +124,34 @@
             <p class="text-center mb-4 text-sm">กำลังประมวลผลข้อมูล AI 2.0...</p>
             <div class="win95-inset h-4 w-full bg-gray-200">
                 <div id="progress-bar" class="h-full bg-blue-800 w-0 transition-all duration-500"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Windows 95 Styled Alert Modal -->
+    <div id="win95-alert-overlay">
+        <div id="win95-alert-window" class="win95-window w-80 md:w-96 p-1 max-w-[90vw] transition-all">
+            <div id="win95-alert-title-bar" class="win95-title-bar bg-red-700 text-white font-bold p-1 text-xs">
+                <span id="win95-alert-title">Critical Error</span>
+                <button onclick="closeWin95Alert()" class="control-btn font-bold">X</button>
+            </div>
+            <div class="p-4 flex gap-3 items-start bg-[#c0c0c0]">
+                <!-- Red error icon (cross circle) -->
+                <div class="flex-shrink-0 w-8 h-8 bg-red-600 rounded-full border-2 border-white flex items-center justify-center text-white font-black text-xl shadow-md">
+                    ✕
+                </div>
+                <div class="flex-1 text-xs text-black leading-normal font-sans">
+                    <p id="win95-alert-message" class="font-bold mb-2">เกิดข้อผิดพลาดในการเชื่อมต่อ n8n</p>
+                    <p id="win95-alert-desc" class="text-gray-800 mb-2">ไม่สามารถติดต่อ Webhook ได้ กรุณาตรวจสอบสถานะเซิร์ฟเวอร์</p>
+                    <div id="win95-alert-details-container" class="hidden mt-2">
+                        <div class="text-[9px] uppercase font-bold text-gray-700 mb-1">Technical Details:</div>
+                        <textarea id="win95-alert-details" readonly class="w-full h-16 p-1 bg-white border border-gray-400 font-mono text-[9px] text-red-700 resize-none win95-inset"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="p-2 flex justify-end gap-2 bg-[#c0c0c0] border-t border-gray-400 pt-3">
+                <button id="win95-alert-retry-btn" class="win95-button font-bold text-xs min-w-[100px] hidden">Bypass CORS</button>
+                <button onclick="closeWin95Alert()" class="win95-button font-bold text-xs min-w-[70px]">OK</button>
             </div>
         </div>
     </div>
@@ -131,7 +171,7 @@
                 </div>
                 <p class="text-xs font-bold text-gray-800">ผู้ทำ: นาย ธีรเมธ แซ่เบ้</p>
                 <p class="text-[10px] text-gray-500">Updated: <span id="update-time">-</span></p>
-                <button onclick="initApp()" class="win95-button bg-yellow-400 text-black font-bold text-xs mt-1">🔄 Scrape ใหม่</button>
+                <button onclick="triggerScrape()" class="win95-button bg-yellow-400 text-black font-bold text-xs mt-1">🔄 Scrape ใหม่</button>
             </div>
         </header>
 
@@ -281,24 +321,149 @@
             
             showLoading(true);
             try {
-                // ใช้ mode: 'no-cors' เพื่อป้องกันปัญหา Browser Block สัญญาณ
-                await fetch(N8N_WEBHOOK_URL, {
+                // ส่ง POST request ไปยัง n8n Webhook
+                const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
-                    mode: 'no-cors', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'start_scrape', timestamp: new Date(), source: 'AI_FOOD_DASHBOARD' })
+                    body: JSON.stringify({ 
+                        action: 'start_scrape', 
+                        timestamp: new Date(), 
+                        source: 'AI_FOOD_DASHBOARD' 
+                    })
                 });
 
-                // แจ้งเตือนแบบกว้างๆ เพราะ no-cors จะอ่าน response ไม่ได้
-                alert("ส่งคำสั่งไปที่ n8n เรียบร้อย! กรุณาตรวจสอบสถานะในหน้า Executions ของ n8n (ระบบกำลัง Scrape ข้อมูลใหม่ลง Google Sheet)");
-                
-                // Refresh data เผื่อ n8n รันเสร็จเร็ว
-                setTimeout(() => initApp(), 5000); 
+                if (response.ok) {
+                    showWin95Alert(
+                        "AI Scraper Activated",
+                        "ส่งคำสั่งไปที่ n8n เรียบร้อยแล้ว!",
+                        "ระบบกำลังเริ่มต้นการดึงข้อมูลร้านอาหารใหม่จาก Google Maps และบันทึกลง Google Sheet ของคุณ (ใช้เวลาประมาณ 1-2 นาที) กรุณารอสักครู่...",
+                        false // Not an error
+                    );
+                    
+                    // รีเฟรชข้อมูลหน้าจอหลังจากผ่านไป 10 วินาที เพื่อเช็คว่ามีอะไรใหม่
+                    setTimeout(() => initApp(), 10000);
+                } else {
+                    throw new Error(`n8n Webhook ตอบกลับด้วยรหัสข้อผิดพลาด: ${response.status} (${response.statusText})`);
+                }
             } catch (e) {
                 console.error("Fetch Error:", e);
-                alert("เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาตรวจสอบ Console (F12)");
+                
+                // หากการดึงข้อมูลล้มเหลว (เช่น CORS block หรือเซิร์ฟเวอร์ออฟไลน์)
+                let errorMsg = "ไม่สามารถเชื่อมต่อระบบ Scrap ของ n8n ได้";
+                let errorDesc = "สัญญาณการเชื่อมต่อถูกตัดขาด หรือเซิร์ฟเวอร์ n8n ไม่พร้อมใช้งานในขณะนี้ กรุณาเปิดระบบ n8n หรือตรวจสอบลิงก์ Webhook อีกครั้ง";
+                
+                // เช็คกรณีที่เป็นไปได้ว่าเกิดจาก CORS block
+                if (e.name === 'TypeError' && e.message.includes('Failed to fetch')) {
+                    errorDesc = "เกิดข้อผิดพลาดในการดึงข้อมูลหรือติดนโยบาย CORS ของเบราว์เซอร์ แต่คำสั่งอาจถูกส่งไปถึง n8n แล้ว! เพื่อความแน่นอน คุณสามารถลองส่งคำสั่งโดยตรงแบบเลี่ยง CORS (Bypass CORS) ได้จากปุ่มด้านล่าง";
+                }
+                
+                showWin95Alert(
+                    "System Connection Error",
+                    errorMsg,
+                    errorDesc,
+                    true, // Is error
+                    e.toString(),
+                    async () => {
+                        closeWin95Alert();
+                        await triggerScrapeNoCors();
+                    }
+                );
+            } finally {
+                showLoading(false);
             }
-            showLoading(false);
+        }
+
+        async function triggerScrapeNoCors() {
+            showLoading(true);
+            try {
+                await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: 'start_scrape', 
+                        timestamp: new Date(), 
+                        source: 'AI_FOOD_DASHBOARD_BYPASS' 
+                    })
+                });
+
+                showWin95Alert(
+                    "AI Scraper (no-cors)",
+                    "ส่งคำสั่งแบบเลี่ยง CORS สำเร็จ!",
+                    "ระบบได้ส่งข้อมูลการรันไปยัง n8n แล้ว (ด้วยโหมดเลี่ยง CORS) เนื่องจากเบราว์เซอร์ไม่สามารถประเมินผลลัพธ์ย้อนกลับได้ กรุณาตรวจสอบผลการรันในแผงควบคุม n8n ของคุณโดยตรง",
+                    false
+                );
+                setTimeout(() => initApp(), 5000);
+            } catch (e) {
+                showWin95Alert(
+                    "Critical Error",
+                    "ระบบล้มเหลวโดยสิ้นเชิง",
+                    "ไม่สามารถติดต่อเซิร์ฟเวอร์ได้เลย แม้จะลองใช้โหมดเลี่ยง CORS แล้ว กรุณาตรวจสอบอินเทอร์เน็ตหรือสถานะการทำงานของ n8n",
+                    true,
+                    e.toString()
+                );
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showWin95Alert(title, msg, desc, isError = false, details = '', retryCallback = null) {
+            const overlay = document.getElementById('win95-alert-overlay');
+            const win = document.getElementById('win95-alert-window');
+            const titleBar = document.getElementById('win95-alert-title-bar');
+            const titleSpan = document.getElementById('win95-alert-title');
+            const msgP = document.getElementById('win95-alert-message');
+            const descP = document.getElementById('win95-alert-desc');
+            const detailsContainer = document.getElementById('win95-alert-details-container');
+            const detailsTa = document.getElementById('win95-alert-details');
+            const retryBtn = document.getElementById('win95-alert-retry-btn');
+            const iconDiv = win.querySelector('.flex-shrink-0');
+
+            // Set Title & Colors
+            titleSpan.innerText = title;
+            if (isError) {
+                titleBar.className = "win95-title-bar bg-red-700 text-white font-bold p-1 text-xs";
+                iconDiv.className = "flex-shrink-0 w-8 h-8 bg-red-600 rounded-full border-2 border-white flex items-center justify-center text-white font-black text-xl shadow-md";
+                iconDiv.innerHTML = "✕";
+            } else {
+                titleBar.className = "win95-title-bar bg-blue-800 text-white font-bold p-1 text-xs";
+                iconDiv.className = "flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center text-white font-black text-xl shadow-md";
+                iconDiv.innerHTML = "ℹ️";
+            }
+
+            // Set Messages
+            msgP.innerHTML = msg;
+            descP.innerHTML = desc;
+
+            // Handle Technical Details
+            if (details) {
+                detailsContainer.classList.remove('hidden');
+                detailsTa.value = details;
+            } else {
+                detailsContainer.classList.add('hidden');
+            }
+
+            // Handle Retry Button
+            if (retryCallback) {
+                retryBtn.classList.remove('hidden');
+                retryBtn.onclick = retryCallback;
+            } else {
+                retryBtn.classList.add('hidden');
+            }
+
+            // Display
+            overlay.style.display = 'flex';
+
+            // Add shake animation if error
+            if (isError) {
+                win.classList.remove('win95-shake');
+                void win.offsetWidth; // Trigger reflow to restart animation
+                win.classList.add('win95-shake');
+            }
+        }
+
+        function closeWin95Alert() {
+            document.getElementById('win95-alert-overlay').style.display = 'none';
         }
 
         async function initApp() {
