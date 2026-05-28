@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI FOOD DECISION ASSISTANT v2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=MS+Sans+Serif&family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --win-gray: #c0c0c0;
+            --win-white: #ffffff;
+            --win-dark-gray: #808080;
+            --win-border-light: #dfdfdf;
+            --win-pink: #ff0080;
+            --win-blue: #000080;
+        }
+
+        body {
+            background-color: #55aaaa;
+            font-family: 'Kanit', 'MS Sans Serif', sans-serif;
+            image-rendering: pixelated;
+        }
+
+        .win95-window {
+            background: var(--win-gray);
+            border: 2px solid;
+            border-top-color: var(--win-border-light);
+            border-left-color: var(--win-border-light);
+            border-right-color: var(--win-dark-gray);
+            border-bottom-color: var(--win-dark-gray);
+            box-shadow: 1px 1px 0 0 black;
+        }
+
+        .win95-inset {
+            border: 2px solid;
+            border-top-color: var(--win-dark-gray);
+            border-left-color: var(--win-dark-gray);
+            border-right-color: var(--win-border-light);
+            border-bottom-color: var(--win-border-light);
+            background: var(--win-white);
+        }
+
+        .win95-button {
+            background: var(--win-gray);
+            border: 2px solid;
+            border-top-color: var(--win-border-light);
+            border-left-color: var(--win-border-light);
+            border-right-color: var(--win-dark-gray);
+            border-bottom-color: var(--win-dark-gray);
+            padding: 2px 8px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .win95-button:active, .win95-button.active {
+            border-top-color: var(--win-dark-gray);
+            border-left-color: var(--win-dark-gray);
+            border-right-color: var(--win-border-light);
+            border-bottom-color: var(--win-border-light);
+            padding: 3px 7px 1px 9px;
+            background: #e0e0e0;
+        }
+
+        .win95-title-bar {
+            background: var(--win-pink);
+            color: white;
+            padding: 4px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .title-controls { display: flex; gap: 2px; }
+        .control-btn {
+            width: 16px; height: 14px; background: var(--win-gray); border: 1px solid;
+            border-top-color: var(--win-border-light); border-left-color: var(--win-border-light);
+            border-right-color: var(--win-dark-gray); border-bottom-color: var(--win-dark-gray);
+            font-size: 10px; display: flex; align-items: center; justify-content: center; color: black;
+        }
+
+        .badge { padding: 2px 6px; font-size: 10px; border: 1px solid black; text-transform: uppercase; }
+
+        .scroll-win95::-webkit-scrollbar { width: 16px; background: #d4d4d4; }
+        .scroll-win95::-webkit-scrollbar-thumb {
+            background: var(--win-gray); border: 2px solid;
+            border-top-color: var(--win-border-light); border-left-color: var(--win-border-light);
+            border-right-color: var(--win-dark-gray); border-bottom-color: var(--win-dark-gray);
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 5px var(--win-pink); }
+            50% { box-shadow: 0 0 20px var(--win-pink); }
+            100% { box-shadow: 0 0 5px var(--win-pink); }
+        }
+        .premium-rank-1 { animation: pulse-glow 2s infinite; }
+
+        #loading-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: none; z-index: 9999; align-items: center; justify-content: center;
+        }
+    </style>
+</head>
+<body class="p-2 md:p-4">
+
+    <div id="loading-overlay">
+        <div class="win95-window p-4 w-64">
+            <div class="win95-title-bar mb-4"><span>AI System Processing</span></div>
+            <p class="text-center mb-4 text-sm">กำลังประมวลผลข้อมูล AI 2.0...</p>
+            <div class="win95-inset h-4 w-full bg-gray-200">
+                <div id="progress-bar" class="h-full bg-blue-800 w-0 transition-all duration-500"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto win95-window">
+        <header class="win95-title-bar flex-col md:flex-row gap-4 py-4 px-6 border-b-2 border-black">
+            <div class="flex flex-col">
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight">AI FOOD ASSISTANT v2.0</h1>
+                <p class="text-xs font-normal opacity-90">Deep Scoring Logic: ความแม่นยำสูงขึ้น วิเคราะห์จากพฤติกรรมผู้ใช้จริง</p>
+            </div>
+            <div class="flex flex-col items-end gap-1 text-right">
+                <div class="flex gap-2 mb-1">
+                    <span class="badge bg-blue-100 text-blue-800 border-blue-400">n8n</span>
+                    <span class="badge bg-orange-100 text-orange-800 border-orange-400">Google Gemini CLI</span>
+                    <span class="badge bg-pink-100 text-pink-800 border-pink-400">Apify</span>
+                    <span class="badge bg-green-100 text-green-800 border-green-400">Google Sheet</span>
+                </div>
+                <p class="text-xs font-bold text-gray-800">ผู้ทำ: นาย ธีรเมธ แซ่เบ้</p>
+                <p class="text-[10px] text-gray-500">Updated: <span id="update-time">-</span></p>
+                <button onclick="initApp()" class="win95-button bg-yellow-400 text-black font-bold text-xs mt-1">🔄 Scrape ใหม่</button>
+            </div>
+        </header>
+
+        <div class="p-4 bg-[#c0c0c0] grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <aside class="lg:col-span-3 flex flex-col gap-4">
+                <div class="win95-window p-3">
+                    <div class="win95-title-bar mb-2"><span>📍 เลือกย่าน (Mapping 2.0)</span></div>
+                    <div id="area-filters" class="flex flex-wrap gap-2 p-2 win95-inset h-auto">
+                        <button class="win95-button text-xs active" data-area="all">ทั้งหมด</button>
+                        <button class="win95-button text-xs" data-area="สยาม">สยาม</button>
+                        <button class="win95-button text-xs" data-area="อารีย์">อารีย์</button>
+                        <button class="win95-button text-xs" data-area="ทองหล่อ">ทองหล่อ</button>
+                        <button class="win95-button text-xs" data-area="อโศก">อโศก</button>
+                        <button class="win95-button text-xs" data-area="พร้อมพงษ์">พร้อมพงษ์</button>
+                    </div>
+                </div>
+
+                <div class="win95-window p-3">
+                    <div class="win95-title-bar mb-2"><span>📊 ประเภทอาหาร</span></div>
+                    <select id="category-filter" class="w-full p-1 win95-inset text-sm">
+                        <option value="all">ทั้งหมด</option>
+                    </select>
+                </div>
+            </aside>
+
+            <main class="lg:col-span-9 flex flex-col gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div class="win95-window p-2 text-center">
+                        <div class="text-[10px] uppercase font-bold text-gray-600">Total Found</div>
+                        <div id="stat-total" class="text-2xl font-black text-blue-800">0</div>
+                    </div>
+                    <div class="win95-window p-2 text-center">
+                        <div class="text-[10px] uppercase font-bold text-gray-600">Avg Price</div>
+                        <div id="stat-price" class="text-2xl font-black text-green-700">0฿</div>
+                    </div>
+                    <div class="win95-window p-2 text-center">
+                        <div class="text-[10px] uppercase font-bold text-gray-600">Avg AI Score</div>
+                        <div id="stat-score" class="text-2xl font-black text-pink-600">0</div>
+                    </div>
+                    <div class="win95-window p-2 text-center">
+                        <div class="text-[10px] uppercase font-bold text-gray-600">Trusted Store</div>
+                        <div id="stat-trusted" class="text-2xl font-black text-purple-700">0</div>
+                    </div>
+                </div>
+
+                <div class="win95-window overflow-hidden">
+                    <div class="win95-title-bar bg-blue-800"><span>⭐ TOP 3 AI INTELLIGENCE SELECTION</span></div>
+                    
+                    <div class="bg-gray-200 p-2 border-b border-black flex flex-wrap gap-x-4 gap-y-2 items-center text-xs">
+                        <span class="font-bold border-r border-gray-400 pr-2">🎯 สถานการณ์:</span>
+                        <div id="scenario-filters" class="flex flex-wrap gap-3">
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="scenario" value="default" checked> <span>สมดุล</span></label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="scenario" value="safe"> <span>🛡️ ปลอดภัย</span></label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="scenario" value="cheap"> <span>💰 ประหยัด</span></label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="scenario" value="fast"> <span>⚡ รีบกิน</span></label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="scenario" value="work"> <span>💼 คุยงาน</span></label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="scenario" value="large"> <span>👥 ทีม 8-12 คน</span></label>
+                        </div>
+                    </div>
+
+                    <div id="top-3-container" class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-100"></div>
+                </div>
+
+                <div class="win95-window">
+                    <div class="win95-title-bar">
+                        <span>📂 RESTAURANT DATABASE (ALL RESULTS)</span>
+                        <input type="text" id="search-input" placeholder="Search..." class="text-black px-2 py-0 text-xs w-32 win95-inset">
+                    </div>
+                    <div class="max-h-96 overflow-y-auto scroll-win95">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="sticky top-0 bg-gray-200 z-10">
+                                <tr class="border-b-2 border-black">
+                                    <th class="p-2 border-r border-gray-400 cursor-pointer" onclick="sortTable('name')">ชื่อร้าน ↕</th>
+                                    <th class="p-2 border-r border-gray-400 cursor-pointer text-center" onclick="sortTable('price')">ราคา/คน ↕</th>
+                                    <th class="p-2 border-r border-gray-400 cursor-pointer text-center" onclick="sortTable('rating')">Rating ↕</th>
+                                    <th class="p-2 border-r border-gray-400 cursor-pointer text-center" onclick="sortTable('base_score')">AI Score ↕</th>
+                                    <th class="p-2 border-r border-gray-400">ประเภท</th>
+                                    <th class="p-2">พื้นที่</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="win95-window">
+                    <div class="win95-title-bar bg-green-800"><span>🤖 AI ANALYSIS & INSIGHTS 2.0</span></div>
+                    <div id="ai-insights" class="p-4 bg-white text-sm italic text-gray-700 leading-relaxed win95-inset m-2"></div>
+                </div>
+
+                <!-- NEW: Human Review Flag Section -->
+                <div class="win95-window">
+                    <div class="win95-title-bar bg-red-700"><span>🚩 HUMAN REVIEW FLAGS (LOW CONFIDENCE)</span></div>
+                    <div id="human-flags" class="p-2 bg-white win95-inset m-2 max-h-40 overflow-y-auto scroll-win95">
+                        <!-- Flagged items here -->
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <footer class="win95-inset m-1 p-1 flex justify-between text-[10px] bg-gray-200 font-bold uppercase">
+            <div>System: Online | Mode: Deep Analysis</div>
+            <div>WINDOWS 95 - AI EDITION v2.0</div>
+        </footer>
+    </div>
+
+    <div id="chat-window" class="fixed bottom-4 right-4 w-72 md:w-80 win95-window z-50">
+        <div class="win95-title-bar cursor-move" id="chat-header">
+            <div class="flex items-center gap-2">
+                <div class="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[8px] text-pink-600 font-bold">AI</div>
+                <span>Food Assistant Chat</span>
+            </div>
+            <div class="title-controls">
+                <button class="control-btn" onclick="toggleChat()">_</button>
+            </div>
+        </div>
+        <div id="chat-body" class="p-2">
+            <div id="chat-messages" class="win95-inset h-48 overflow-y-auto p-2 mb-2 bg-white text-xs flex flex-col gap-2 scroll-win95">
+                <div class="bg-gray-100 p-2 border border-dashed border-gray-400">
+                    สวัสดี! ฉันคือ AI Data Assistant ถามเกี่ยวกับร้านอาหารในระบบได้เลยครับ
+                </div>
+            </div>
+            <div class="flex gap-1">
+                <input type="text" id="chat-input" placeholder="ถาม AI..." class="flex-1 p-1 text-xs win95-inset">
+                <button onclick="sendChatMessage()" class="win95-button text-xs font-bold">ส่ง</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_ID = "1ehO4liCpgW_txiVCWd_zn1nUm2naRkKMLk_m6Qkn7zM";
+        // กลับมาใช้ Live API เพื่อให้ข้อมูลอัปเดตทันทีหลัง Scrape
+        const API_URL = `https://opensheet.elk.sh/${SHEET_ID}/1`; 
+        // ใส่ URL Webhook จาก n8n ที่นี่
+        const N8N_WEBHOOK_URL = "https://n8n-external.exservice.io/webhook/apify-googlemaps-receiver";
+        
+        let rawData = [];
+        let processedData = [];
+        let filteredData = [];
+        let top3Data = [];
+        let currentSort = { key: 'base_score', asc: false };
+
+        window.onload = () => { initApp(); initFilters(); initChat(); };
+
+        async function triggerScrape() {
+            if (!confirm("ต้องการเริ่มระบบ AI Scraper ใหม่ใช่หรือไม่? (ใช้เวลาประมาณ 1-2 นาที)")) return;
+            
+            showLoading(true);
+            try {
+                // ใช้ mode: 'no-cors' เพื่อป้องกันปัญหา Browser Block สัญญาณ
+                await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'start_scrape', timestamp: new Date(), source: 'AI_FOOD_DASHBOARD' })
+                });
+
+                // แจ้งเตือนแบบกว้างๆ เพราะ no-cors จะอ่าน response ไม่ได้
+                alert("ส่งคำสั่งไปที่ n8n เรียบร้อย! กรุณาตรวจสอบสถานะในหน้า Executions ของ n8n (ระบบกำลัง Scrape ข้อมูลใหม่ลง Google Sheet)");
+                
+                // Refresh data เผื่อ n8n รันเสร็จเร็ว
+                setTimeout(() => initApp(), 5000); 
+            } catch (e) {
+                console.error("Fetch Error:", e);
+                alert("เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาตรวจสอบ Console (F12)");
+            }
+            showLoading(false);
+        }
+
+        async function initApp() {
+            showLoading(true);
+            try {
+                const response = await fetch(API_URL);
+                const json = await response.json();
+                rawData = json.value || json;
+                processData();
+                applyAllFilters();
+                document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
+            } catch (e) { alert("Data fetch failed"); }
+            showLoading(false);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+            if(show) document.getElementById('progress-bar').style.width = '100%';
+        }
+
+        function generateAIReasoning(item) {
+            const reasons = [];
+            if (item.rating >= 4.7) reasons.push("เรตติ้งสูงสุดในย่าน");
+            if (item.reviews > 1000) reasons.push("ฐานรีวิวแน่นที่สุด");
+            if (item.price <= 300) reasons.push("คุ้มค่าราคาประหยัด");
+            if (item.isTrusted) reasons.push("มาตรฐานสูงไว้ใจได้");
+            if (item.category === 'ปิ้งย่าง' || item.category === 'ชาบู') reasons.push("เหมาะสังสรรค์กลุ่มใหญ่");
+            return reasons.length > 0 ? reasons.slice(0, 2).join(" & ") : "ตัวเลือกที่สมดุลที่สุด";
+        }
+
+        function processData() {
+            const uniqueMap = new Map();
+            rawData.forEach(item => {
+                const name = item['title'] || item['Name'] || '';
+                if (!name) return;
+                const key = `${name.trim().toLowerCase()}`;
+                if (!uniqueMap.has(key)) uniqueMap.set(key, item);
+            });
+
+            processedData = Array.from(uniqueMap.values()).map(item => {
+                let cat = normalizeCategory(item['categoryName'] || 'อื่นๆ');
+                
+                // --- SMART PRICE PARSING 2.0 ---
+                let priceRaw = (item['price'] || '$$').toString();
+                let priceValue = 500;
+                let displayPrice = priceRaw;
+
+                // Extract numbers (e.g. ฿200-400 or 1,000+)
+                const numbers = priceRaw.match(/[0-9,]+/g);
+                if (numbers && numbers.length > 0) {
+                    const parsedNums = numbers.map(n => parseInt(n.replace(/,/g, '')));
+                    if (parsedNums.length >= 2) {
+                        priceValue = (parsedNums[0] + parsedNums[1]) / 2; // Average of range
+                    } else {
+                        priceValue = parsedNums[0];
+                    }
+                } else {
+                    // Fallback to $ symbol counting
+                    const count = (priceRaw.match(/\$/g) || []).length;
+                    if (count >= 4) priceValue = 1500;
+                    else if (count === 3) priceValue = 850;
+                    else if (count === 2) priceValue = 450;
+                    else if (count === 1) priceValue = 250;
+                }
+
+                let rating = parseFloat(item['totalScore'] || 4.0);
+                let reviews = parseInt(item['reviewsCount'] || 0);
+                let ratingNorm = rating * 20;
+                let popNorm = Math.min(100, (reviews / 500) * 100);
+                let score = (ratingNorm * 0.6) + (popNorm * 0.3) + 10;
+
+                const processedItem = {
+                    name: item['title'],
+                    area: item['neighborhood'] || 'ไม่ระบุ',
+                    address: item['address'] || '',
+                    category: cat,
+                    price: priceValue,
+                    display_price: displayPrice || 'ไม่ระบุ',
+                    rating: rating,
+                    reviews: reviews,
+                    base_score: Math.round(score),
+                    image: item['imageUrl'] || `https://picsum.photos/seed/${encodeURIComponent(item['title'])}/400/300`,
+                    map: item['url'] || '#',
+                    source: item['website'] || '#',
+                    isTrusted: rating >= 4.4 && reviews > 300
+                };
+                processedItem.pros = generateAIReasoning(processedItem);
+                return processedItem;
+            });
+            populateCategoryDropdown();
+        }
+
+        function normalizeCategory(cat) {
+            const mapping = { 'ญี่ปุ่น': 'อาหารญี่ปุ่น', 'Thai': 'อาหารไทย', 'BBQ': 'ปิ้งย่าง', 'ชาบู': 'ชาบู', 'Cafe': 'คาเฟ่', 'Italian': 'อิตาเลียน' };
+            for (let k in mapping) if (cat.includes(k)) return mapping[k];
+            return cat.split(',')[0] || 'อื่นๆ';
+        }
+
+        function populateCategoryDropdown() {
+            const cats = [...new Set(processedData.map(i => i.category))];
+            document.getElementById('category-filter').innerHTML = '<option value="all">ทั้งหมด</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function applyAllFilters() {
+            const area = document.querySelector('#area-filters .win95-button.active').dataset.area;
+            const scenario = document.querySelector('input[name="scenario"]:checked').value;
+            const category = document.getElementById('category-filter').value;
+            const search = document.getElementById('search-input').value.toLowerCase();
+
+            const areaMap = {
+                'สยาม': ['ปทุมวัน', 'Siam', 'Pathum Wan', 'สยาม'],
+                'อารีย์': ['พญาไท', 'Ari', 'Phaya Thai', 'สามเสน'],
+                'ทองหล่อ': ['ทองหล่อ', 'Thong Lo', 'Thonglor', 'สุขุมวิท 55'],
+                'อโศก': ['อโศก', 'Asoke', 'คลองเตยเหนือ', 'Terminal 21'],
+                'พร้อมพงษ์': ['พร้อมพงษ์', 'Phrom Phong', 'สุขุมวิท 39', 'EmQuartier']
+            };
+
+            const baseFiltered = processedData.filter(item => {
+                let matchArea = area === 'all';
+                if (!matchArea && areaMap[area]) {
+                    const keys = areaMap[area];
+                    const content = (item.area + ' ' + item.name + ' ' + item.address).toLowerCase();
+                    matchArea = keys.some(key => content.includes(key.toLowerCase()));
+                }
+                const matchCat = category === 'all' || item.category === category;
+                const matchSearch = item.name.toLowerCase().includes(search);
+                return matchArea && matchCat && matchSearch;
+            });
+
+            filteredData = [...baseFiltered].sort((a,b) => b.rating - a.rating);
+
+            top3Data = baseFiltered.map(item => {
+                let s = item.base_score;
+                if (scenario === 'safe') s = (item.rating * 15) + Math.min(25, item.reviews / 20);
+                else if (scenario === 'cheap') s = (1000 - item.price) / 10 + (item.rating * 5);
+                else if (scenario === 'fast') {
+                    s = (item.rating * 10);
+                    if (['ราเมง', 'อาหารญี่ปุ่น'].includes(item.category)) s += 30;
+                }
+                else if (scenario === 'work') {
+                    s = (item.rating * 15);
+                    if (item.category === 'คาเฟ่') s += 25;
+                }
+                else if (scenario === 'large') {
+                    if (['ปิ้งย่าง', 'ชาบู', 'อาหารไทย'].includes(item.category)) s += 40;
+                }
+                return { ...item, scenario_score: Math.min(100, Math.round(s)) };
+            }).sort((a,b) => b.scenario_score - a.scenario_score);
+
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('stat-total').innerText = filteredData.length;
+            document.getElementById('stat-price').innerText = Math.round(filteredData.reduce((a,b)=>a+b.price,0)/filteredData.length || 0) + '฿';
+            document.getElementById('stat-score').innerText = Math.round(filteredData.reduce((a,b)=>a+b.base_score,0)/filteredData.length || 0);
+            document.getElementById('stat-trusted').innerText = filteredData.filter(i=>i.isTrusted).length;
+            renderTop3();
+            renderTable();
+            renderAIInsights();
+            renderHumanFlags();
+        }
+
+        function renderHumanFlags() {
+            const container = document.getElementById('human-flags');
+            const lowConf = filteredData.filter(i => i.reviews < 100 || i.rating < 4.0 || (i.rating >= 4.7 && i.reviews < 150));
+            
+            if (lowConf.length === 0) {
+                container.innerHTML = '<div class="text-xs text-green-600 font-bold p-2 text-center">✅ ข้อมูลในกลุ่มนี้มีความน่าเชื่อถือสูงในเชิงสถิติ</div>';
+                return;
+            }
+
+            container.innerHTML = lowConf.map(item => {
+                let reason = "";
+                let type = "";
+                if (item.rating >= 4.7 && item.reviews < 150) {
+                    type = "[Rating vs Review Mismatch]";
+                    reason = `Rating ${item.rating}⭐ แต่มีเพียง ${item.reviews} รีวิว — อาจยังไม่น่าเชื่อถือพอหรืออาจเป็นช่วงเปิดร้านใหม่`;
+                } else if (item.reviews < 100) {
+                    type = "[รีวิวน้อย]";
+                    reason = `รีวิวน้อยมาก (${item.reviews}) — ยังไม่มีข้อมูลเพียงพอสำหรับการตัดสินใจที่แม่นยำ`;
+                } else if (item.rating < 4.0) {
+                    type = "[คะแนนต่ำกว่ามาตรฐาน]";
+                    reason = `เรตติ้งเพียง ${item.rating}⭐ — มีความเสี่ยงด้านรสชาติหรือบริการสูงกว่าร้านอื่น`;
+                }
+                return `
+                    <div class="border-b border-red-100 py-2">
+                        <div class="text-[11px] font-bold text-red-800 uppercase mb-1">${item.name} (${item.area})</div>
+                        <div class="text-[10px] text-gray-700 leading-tight">
+                            <span class="font-black text-red-600">${type}</span> ${reason}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTop3() {
+            const top = top3Data.slice(0, 3);
+            document.getElementById('top-3-container').innerHTML = top.map((item, idx) => `
+                <div class="win95-window flex flex-col ${idx === 0 ? 'premium-rank-1 border-pink-500 border-4' : ''}">
+                    <div class="win95-title-bar ${idx === 0 ? 'bg-pink-600' : 'bg-gray-700'}">
+                        <span>#${idx+1} RECOMMENDED</span>
+                        <span class="text-[10px] bg-white text-black px-1">${item.scenario_score}% SCORE</span>
+                    </div>
+                    <div class="h-32 win95-inset m-1 overflow-hidden">
+                        <img src="${item.image}" class="w-full h-full object-cover grayscale-[0.2]">
+                    </div>
+                    <div class="p-2 flex-1 flex flex-col">
+                        <h3 class="font-bold text-sm truncate uppercase mb-1">${item.name}</h3>
+                        <div class="grid grid-cols-3 gap-1 mb-2">
+                            <div class="win95-inset bg-blue-50 p-1 text-center">
+                                <div class="text-[7px] uppercase text-gray-500">Rating</div>
+                                <div class="text-[10px] font-black text-blue-800">${item.rating} ⭐</div>
+                            </div>
+                            <div class="win95-inset bg-green-50 p-1 text-center">
+                                <div class="text-[7px] uppercase text-gray-500">Price</div>
+                                <div class="text-[10px] font-black text-green-800">${item.display_price}</div>
+                            </div>
+                            <div class="win95-inset bg-pink-50 p-1 text-center">
+                                <div class="text-[7px] uppercase text-gray-500">Score</div>
+                                <div class="text-[10px] font-black text-pink-600">${item.scenario_score}%</div>
+                            </div>
+                        </div>
+                        <div class="text-[10px] font-bold text-blue-900 mb-2">📍 ${item.area}</div>
+                        <div class="text-[9px] border-t border-dashed border-gray-400 pt-2 mb-2 text-gray-700">
+                            <b>AI WHY:</b> ${item.pros}
+                        </div>
+                        <div class="flex gap-1 mt-auto">
+                            <a href="${item.map}" target="_blank" class="win95-button text-[9px] flex-1 text-center font-bold">MAP</a>
+                            <a href="${item.source}" target="_blank" class="win95-button text-[9px] flex-1 text-center">WEB</a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTable() {
+            document.getElementById('table-body').innerHTML = filteredData.map(item => `
+                <tr class="hover:bg-blue-50 border-b border-gray-300">
+                    <td class="p-2 font-bold">${item.name}</td>
+                    <td class="p-2 text-center text-green-800 font-bold">${item.display_price}</td>
+                    <td class="p-2 text-center font-bold text-blue-700">${item.rating} <span class="text-[8px] font-normal text-gray-500">(${item.reviews})</span></td>
+                    <td class="p-2 text-center font-black text-gray-700">${item.base_score}</td>
+                    <td class="p-2"><span class="badge bg-gray-100">${item.category}</span></td>
+                    <td class="p-2 text-[10px]">${item.area}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAIInsights() {
+            const top = top3Data[0];
+            const safe = [...filteredData].sort((a,b)=>b.reviews - a.reviews)[0];
+            document.getElementById('ai-insights').innerHTML = `
+                <p>💡 <b>AI Reasoning:</b> จากการวิเคราะห์ร้านอาหารทั้งหมด <b>${filteredData.length} ร้าน</b> เราพบว่า <b>${top?.name || '-'}</b> เป็นตัวเลือกที่โดดเด่นที่สุดตามสถานการณ์ที่คุณเลือก</p>
+                <p class="mt-2">🛡️ <b>Safety First:</b> ร้านที่มีความเสถียรสูงสุดคือ <b>${safe?.name || '-'}</b> ด้วยรีวิวสะสม <b>${safe?.reviews || 0} รายการ</b></p>
+            `;
+        }
+
+        function initFilters() {
+            document.querySelectorAll('#area-filters .win95-button').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('#area-filters .win95-button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active'); applyAllFilters();
+                };
+            });
+            document.querySelectorAll('input[name="scenario"]').forEach(i => i.onchange = applyAllFilters);
+            document.getElementById('category-filter').onchange = applyAllFilters;
+            document.getElementById('search-input').oninput = applyAllFilters;
+        }
+
+        function sortTable(key) {
+            if (currentSort.key === key) currentSort.asc = !currentSort.asc;
+            else { currentSort.key = key; currentSort.asc = true; }
+            filteredData.sort((a,b) => currentSort.asc ? (a[key] > b[key] ? 1 : -1) : (a[key] < b[key] ? 1 : -1));
+            updateUI();
+        }
+
+        function initChat() {
+            const input = document.getElementById('chat-input');
+            if(input) input.onkeypress = (e) => { if (e.key === 'Enter') sendChatMessage(); };
+        }
+        function toggleChat() {
+            const body = document.getElementById('chat-body');
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        }
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addChatMessage('user', msg);
+            input.value = '';
+            setTimeout(() => {
+                const response = generateAIResponse(msg.toLowerCase());
+                addChatMessage('ai', response);
+            }, 600);
+        }
+        function addChatMessage(role, text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = role === 'user' ? 'self-end bg-blue-100 p-2 border border-blue-300' : 'bg-gray-100 p-2 border border-gray-400';
+            div.innerHTML = `<b>${role === 'user' ? 'คุณ' : 'AI'}:</b> ${text}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function generateAIResponse(msg) {
+            msg = msg.toLowerCase();
+            const nameMatch = processedData.find(i => msg.includes(i.name.toLowerCase()));
+            const areas = {
+                'สยาม': ['สยาม', 'siam', 'ปทุมวัน'],
+                'อารีย์': ['อารีย์', 'ari', 'พญาไท', 'สามเสน'],
+                'ทองหล่อ': ['ทองหล่อ', 'thong lo', 'thonglor', 'สุขุมวิท 55'],
+                'อโศก': ['อโศก', 'asoke', 'สุขุมวิท 21', 'terminal 21'],
+                'พร้อมพงษ์': ['พร้อมพงษ์', 'phrom phong', 'สุขุมวิท 39', 'emquartier']
+            };
+            const categories = ['ญี่ปุ่น', 'ไทย', 'ปิ้งย่าง', 'ชาบู', 'คาเฟ่', 'อิตาเลียน', 'ราเมง', 'เกาหลี', 'จีน', 'ซูชิ'];
+            const intentKeywords = ['ถูก', 'ประหยัด', 'คุ้ม', 'แพง', 'พิเศษ', 'หรู', 'บริษัท', 'กลุ่ม', 'ทีม', 'เลี้ยง'];
+            const recommendKeywords = ['แนะนำ', 'แนะนำหน่อย', 'หาร้าน', 'มีร้าน', 'ไหนดี', 'บอกหน่อย'];
+            const hasLocation = Object.values(areas).flat().some(k => msg.includes(k));
+            const hasCategory = categories.some(k => msg.includes(k));
+            const hasIntent = intentKeywords.some(k => msg.includes(k));
+            const hasRecommendIntent = recommendKeywords.some(k => msg.includes(k));
+            const chatterKeywords = ['สวัสดี', 'ทักทาย', 'เป็นไง', 'กินข้าวยัง', 'กินยัง', 'ชื่ออะไร', 'หิว', 'ทำอะไร', 'สบายดี'];
+            const isChatter = chatterKeywords.some(k => msg.includes(k)) && !hasLocation && !hasCategory && !nameMatch && !hasIntent;
+            if (isChatter || (!hasLocation && !hasCategory && !hasIntent && !nameMatch && !hasRecommendIntent)) {
+                return "ขออภัยครับ ฉันเป็น <b>AI Data Assistant</b> ที่ถูกโปรแกรมให้เข้าถึงเฉพาะ <b>ฐานข้อมูลร้านอาหาร</b> เท่านั้น ไม่สามารถพูดคุยเรื่องทั่วไปหรือตอบคำถามส่วนตัวได้ครับ <br><br>ลองถามเจาะจง เช่น <i>'ร้านญี่ปุ่นย่านสยาม'</i> หรือ <i>'แนะนำร้านปิ้งย่าง'</i> ดูนะครับ";
+            }
+            if (nameMatch) {
+                return `พบข้อมูลร้าน <b>${nameMatch.name}</b> ในฐานข้อมูลครับ! อยู่ย่าน ${nameMatch.area} เรตติ้ง ${nameMatch.rating} ดาว (${nameMatch.reviews} รีวิว) AI วิเคราะห์ว่า${nameMatch.pros}ครับ`;
+            }
+            let matches = [...processedData];
+            if (hasLocation) {
+                for (let a in areas) {
+                    if (areas[a].some(key => msg.includes(key))) {
+                        matches = matches.filter(i => (i.area + ' ' + i.address).toLowerCase().includes(a) || areas[a].some(k => i.address.toLowerCase().includes(k)));
+                        break;
+                    }
+                }
+            }
+            if (hasCategory) {
+                for (let cat of categories) {
+                    if (msg.includes(cat)) {
+                        matches = matches.filter(i => i.category.includes(cat));
+                        break;
+                    }
+                }
+            }
+            const isCheap = msg.includes('ถูก') || msg.includes('ประหยัด');
+            if (isCheap) matches = matches.filter(i => i.price <= 450).sort((a,b) => a.price - b.price);
+            else matches = matches.sort((a,b) => b.base_score - a.base_score);
+            if (matches.length > 0) {
+                const res = matches[0];
+                return `ฉันคัดเลือกจากฐานข้อมูลมาให้แล้วครับ แนะนำร้าน <b>${res.name}</b> ย่าน ${res.area} ครับ <br>เหตุผล: ${res.pros} (เรตติ้ง ${res.rating}, ${res.reviews} รีวิว)`;
+            }
+            return "ฉันไม่พบร้านอาหารในฐานข้อมูลที่ตรงกับเงื่อนไขนั้นครับ ลองเปลี่ยนชื่อย่านหรือประเภทอาหารดูนะครับ";
+        }
+    </script>
+</body>
+</html>
