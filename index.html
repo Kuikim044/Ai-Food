@@ -121,7 +121,7 @@
     <div id="loading-overlay">
         <div class="win95-window p-4 w-64">
             <div class="win95-title-bar mb-4"><span>AI System Processing</span></div>
-            <p class="text-center mb-4 text-sm">กำลังประมวลผลข้อมูล AI 2.0...</p>
+            <p id="loading-text" class="text-center mb-4 text-xs font-bold leading-tight">กำลังประมวลผลข้อมูล AI 2.0...</p>
             <div class="win95-inset h-4 w-full bg-gray-200">
                 <div id="progress-bar" class="h-full bg-blue-800 w-0 transition-all duration-500"></div>
             </div>
@@ -319,7 +319,13 @@
         async function triggerScrape() {
             if (!confirm("ต้องการเริ่มระบบ AI Scraper ใหม่ใช่หรือไม่? (ใช้เวลาประมาณ 1-2 นาที)")) return;
             
-            showLoading(true);
+            // 1. บันทึกข้อมูลและจำนวนร้านค้าล่าสุดก่อนเริ่มทำ Scrape (Pre-Scrape state)
+            const initialDataString = JSON.stringify(rawData);
+            const initialCount = rawData.length;
+            
+            showLoading(true, "กำลังส่งสัญญาณเริ่มรันระบบ Scrape ไปยัง n8n...", 5);
+            
+            let triggeredSuccessfully = false;
             try {
                 // ส่ง POST request ไปยัง n8n Webhook
                 const response = await fetch(N8N_WEBHOOK_URL, {
@@ -333,15 +339,7 @@
                 });
 
                 if (response.ok) {
-                    showWin95Alert(
-                        "AI Scraper Activated",
-                        "ส่งคำสั่งไปที่ n8n เรียบร้อยแล้ว!",
-                        "ระบบกำลังเริ่มต้นการดึงข้อมูลร้านอาหารใหม่จาก Google Maps และบันทึกลง Google Sheet ของคุณ (ใช้เวลาประมาณ 1-2 นาที) กรุณารอสักครู่...",
-                        false // Not an error
-                    );
-                    
-                    // รีเฟรชข้อมูลหน้าจอหลังจากผ่านไป 10 วินาที เพื่อเช็คว่ามีอะไรใหม่
-                    setTimeout(() => initApp(), 10000);
+                    triggeredSuccessfully = true;
                 } else {
                     throw new Error(`n8n Webhook ตอบกลับด้วยรหัสข้อผิดพลาด: ${response.status} (${response.statusText})`);
                 }
@@ -357,6 +355,7 @@
                     errorDesc = "เกิดข้อผิดพลาดในการดึงข้อมูลหรือติดนโยบาย CORS ของเบราว์เซอร์ แต่คำสั่งอาจถูกส่งไปถึง n8n แล้ว! เพื่อความแน่นอน คุณสามารถลองส่งคำสั่งโดยตรงแบบเลี่ยง CORS (Bypass CORS) ได้จากปุ่มด้านล่าง";
                 }
                 
+                showLoading(false);
                 showWin95Alert(
                     "System Connection Error",
                     errorMsg,
@@ -365,16 +364,20 @@
                     e.toString(),
                     async () => {
                         closeWin95Alert();
-                        await triggerScrapeNoCors();
+                        await triggerScrapeNoCors(initialDataString, initialCount);
                     }
                 );
-            } finally {
-                showLoading(false);
+                return;
+            }
+
+            if (triggeredSuccessfully) {
+                // เริ่มกระบวนการ Polling และแสดงผลหน้าจอโหลดอย่างต่อเนื่อง
+                await runPollingProcess(initialDataString, initialCount, "ปกติ");
             }
         }
 
-        async function triggerScrapeNoCors() {
-            showLoading(true);
+        async function triggerScrapeNoCors(initialDataString, initialCount) {
+            showLoading(true, "กำลังยิงคำสั่งแบบเลี่ยง CORS (no-cors) ไปยัง n8n...", 5);
             try {
                 await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
@@ -387,14 +390,10 @@
                     })
                 });
 
-                showWin95Alert(
-                    "AI Scraper (no-cors)",
-                    "ส่งคำสั่งแบบเลี่ยง CORS สำเร็จ!",
-                    "ระบบได้ส่งข้อมูลการรันไปยัง n8n แล้ว (ด้วยโหมดเลี่ยง CORS) เนื่องจากเบราว์เซอร์ไม่สามารถประเมินผลลัพธ์ย้อนกลับได้ กรุณาตรวจสอบผลการรันในแผงควบคุม n8n ของคุณโดยตรง",
-                    false
-                );
-                setTimeout(() => initApp(), 5000);
+                // การยิง no-cors สำเร็จ จะไม่มี error เด้ง ดังนั้นเราก็รัน Polling ต่อเนื่องได้เลย!
+                await runPollingProcess(initialDataString, initialCount, "Bypass CORS");
             } catch (e) {
+                showLoading(false);
                 showWin95Alert(
                     "Critical Error",
                     "ระบบล้มเหลวโดยสิ้นเชิง",
@@ -402,9 +401,93 @@
                     true,
                     e.toString()
                 );
-            } finally {
-                showLoading(false);
             }
+        }
+
+        async function runPollingProcess(initialDataString, initialCount, modeText) {
+            let elapsedSeconds = 0;
+            const maxSeconds = 90; // รอสูงสุด 90 วินาที
+            let progress = 10;
+            
+            showLoading(true, `เริ่มกระบวนการ Scrape [โหมด: ${modeText}]... (0/${maxSeconds} วินาที)`, progress);
+            
+            const pollInterval = setInterval(async () => {
+                elapsedSeconds += 5;
+                
+                // คำนวณความคืบหน้าแบบสโลว์ๆ (ไต่ระดับไปจนถึง 95%)
+                progress = Math.min(95, 10 + Math.round((elapsedSeconds / maxSeconds) * 85));
+                
+                showLoading(
+                    true, 
+                    `กำลังดำเนินการ Scrape ข้อมูลในระบบ n8n... (ผ่านไป ${elapsedSeconds}/${maxSeconds} วินาที)\nระบบจะประมวลผลและอัปเดตข้อมูลอัตโนมัติทันทีเมื่อข้อมูลใหม่บันทึกลง Google Sheet เรียบร้อย`, 
+                    progress
+                );
+                
+                // ตรวจสอบ Google Sheet เพื่อดูข้อมูลใหม่
+                try {
+                    const response = await fetch(API_URL);
+                    if (response.ok) {
+                        const json = await response.json();
+                        const currentFetchedData = json.value || json;
+                        const currentDataString = JSON.stringify(currentFetchedData);
+                        
+                        // ถ้าระดับข้อมูลไม่เท่าเดิม หรือมีอะไรใน JSON ต่างออกไป แปลว่าอัปเดตแล้ว!
+                        if (currentDataString !== initialDataString || currentFetchedData.length !== initialCount) {
+                            clearInterval(pollInterval);
+                            
+                            // นำเข้าข้อมูลใหม่
+                            rawData = currentFetchedData;
+                            processData();
+                            applyAllFilters();
+                            document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
+                            
+                            // แสดงสถานะสำเร็จ 100%
+                            showLoading(true, "อัปเดตข้อมูลและประมวลผล AI ชุดใหม่เสร็จสมบูรณ์!", 100);
+                            
+                            setTimeout(() => {
+                                showLoading(false);
+                                showWin95Alert(
+                                    "Scrape & Update Success",
+                                    "✨ อัปเดตข้อมูลสำเร็จโดยอัตโนมัติ!",
+                                    `ระบบ AI ได้ทำการนำเข้าร้านอาหารใหม่ทั้งหมดเรียบร้อยแล้ว (จำนวนร้านปัจจุบัน: ${rawData.length} ร้าน) และประมวลผลคะแนน AI Decision Scoring 2.0 ใหม่เรียบร้อยแล้วครับ!`,
+                                    false
+                                );
+                            }, 1500);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Polling fetch failed, retrying in next cycle...", err);
+                }
+                
+                // เมื่อถึงเวลา Timeout สูงสุด
+                if (elapsedSeconds >= maxSeconds) {
+                    clearInterval(pollInterval);
+                    
+                    // ทำการโหลดข้อมูลล่าสุดอีกครั้งเพื่อความแน่ใจ
+                    try {
+                        const response = await fetch(API_URL);
+                        const json = await response.json();
+                        rawData = json.value || json;
+                        processData();
+                        applyAllFilters();
+                        document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
+                    } catch (e) {
+                        console.error("Final poll refresh failed:", e);
+                    }
+                    
+                    showLoading(true, "หมดเวลารอระบบ (Timeout)... กำลังเปิดหน้าแผงควบคุมหลัก", 100);
+                    setTimeout(() => {
+                        showLoading(false);
+                        showWin95Alert(
+                            "Time Out",
+                            "⏱️ สิ้นสุดช่วงเวลาเฝ้ารอข้อมูล",
+                            `ระบบใช้เวลาเกิน ${maxSeconds} วินาทีแล้ว คาดว่าระบบกำลังทยอยบันทึกข้อมูล หรืออาจจะรันเสร็จในไม่ช้า เราได้รีเฟรชหน้าบอร์ดล่าสุดไว้ให้คุณแล้ว (จำนวนร้านปัจจุบัน: ${rawData.length} ร้าน) คุณสามารถตรวจสอบสถานะจริงใน n8n Executions ของคุณได้ครับ`,
+                            false
+                        );
+                    }, 1500);
+                }
+            }, 5000); // ตรวจสอบทุกๆ 5 วินาทีเพื่อให้ทันใจผู้ใช้งาน
         }
 
         function showWin95Alert(title, msg, desc, isError = false, details = '', retryCallback = null) {
@@ -479,9 +562,27 @@
             showLoading(false);
         }
 
-        function showLoading(show) {
-            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-            if(show) document.getElementById('progress-bar').style.width = '100%';
+        function showLoading(show, text = 'กำลังประมวลผลข้อมูล AI 2.0...', progressPercent = null) {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = show ? 'flex' : 'none';
+            
+            const textEl = document.getElementById('loading-text');
+            if (textEl) textEl.innerText = text;
+            
+            const barEl = document.getElementById('progress-bar');
+            if (barEl) {
+                if (progressPercent === null) {
+                    barEl.style.transition = 'width 0.5s ease-out';
+                    barEl.style.width = show ? '100%' : '0%';
+                } else {
+                    if (progressPercent === 0) {
+                        barEl.style.transition = 'none';
+                    } else {
+                        barEl.style.transition = 'width 0.4s ease-out';
+                    }
+                    barEl.style.width = `${progressPercent}%`;
+                }
+            }
         }
 
         function generateAIReasoning(item) {
@@ -506,27 +607,73 @@
             processedData = Array.from(uniqueMap.values()).map(item => {
                 let cat = normalizeCategory(item['categoryName'] || 'อื่นๆ');
                 
-                // --- SMART PRICE PARSING 2.0 ---
-                let priceRaw = (item['price'] || '$$').toString();
-                let priceValue = 500;
+                // --- SMART PRICE PARSING 2.0 & AI ESTIMATION ---
+                let priceRaw = (item['price'] || '').toString().trim();
+                let priceValue = 0;
                 let displayPrice = priceRaw;
+                let isEstimatedPrice = false;
 
-                // Extract numbers (e.g. ฿200-400 or 1,000+)
-                const numbers = priceRaw.match(/[0-9,]+/g);
-                if (numbers && numbers.length > 0) {
-                    const parsedNums = numbers.map(n => parseInt(n.replace(/,/g, '')));
-                    if (parsedNums.length >= 2) {
-                        priceValue = (parsedNums[0] + parsedNums[1]) / 2; // Average of range
+                // Check if price is blank, N/A, undefined, or "ไม่ระบุ"
+                const isPriceMissing = !priceRaw || priceRaw.toLowerCase() === 'n/a' || priceRaw === 'ไม่ระบุ' || priceRaw === '-';
+
+                if (!isPriceMissing) {
+                    // Extract numbers (e.g. ฿200-400 or 1,000+)
+                    const numbers = priceRaw.match(/[0-9,]+/g);
+                    if (numbers && numbers.length > 0) {
+                        const parsedNums = numbers.map(n => parseInt(n.replace(/,/g, '')));
+                        if (parsedNums.length >= 2) {
+                            priceValue = (parsedNums[0] + parsedNums[1]) / 2; // Average of range
+                        } else {
+                            priceValue = parsedNums[0];
+                        }
                     } else {
-                        priceValue = parsedNums[0];
+                        // Fallback to $ symbol counting
+                        const count = (priceRaw.match(/\$/g) || []).length;
+                        if (count >= 4) priceValue = 1500;
+                        else if (count === 3) priceValue = 850;
+                        else if (count === 2) priceValue = 450;
+                        else if (count === 1) priceValue = 250;
+                        else priceValue = 0; // Trigger estimate below if 0
                     }
+                }
+
+                if (isPriceMissing || priceValue === 0) {
+                    isEstimatedPrice = true;
+                    // AI Price Estimator based on category
+                    let basePrice = 250; // Default fallback
+                    const lowerCat = cat.toLowerCase();
+                    if (lowerCat.includes('ญี่ปุ่น') || lowerCat.includes('japanese') || lowerCat.includes('ซูชิ') || lowerCat.includes('sushi') || lowerCat.includes('ราเมง') || lowerCat.includes('ramen')) {
+                        basePrice = 450;
+                    } else if (lowerCat.includes('ชาบู') || lowerCat.includes('shabu') || lowerCat.includes('ปิ้งย่าง') || lowerCat.includes('bbq') || lowerCat.includes('หมูกระทะ') || lowerCat.includes('บุฟเฟต์') || lowerCat.includes('buffet')) {
+                        basePrice = 590;
+                    } else if (lowerCat.includes('คาเฟ่') || lowerCat.includes('cafe') || lowerCat.includes('กาแฟ') || lowerCat.includes('เบเกอรี่') || lowerCat.includes('dessert') || lowerCat.includes('ของหวาน')) {
+                        basePrice = 180;
+                    } else if (lowerCat.includes('อิตาเลียน') || lowerCat.includes('italian') || lowerCat.includes('สเต็ก') || lowerCat.includes('steak') || lowerCat.includes('ฝรั่งเศส')) {
+                        basePrice = 750;
+                    } else if (lowerCat.includes('ไทย') || lowerCat.includes('thai') || lowerCat.includes('ส้มตำ') || lowerCat.includes('ก๋วยเตี๋ยว') || lowerCat.includes('ตามสั่ง')) {
+                        basePrice = 150;
+                    } else if (lowerCat.includes('จีน') || lowerCat.includes('chinese') || lowerCat.includes('ติ่มซำ')) {
+                        basePrice = 350;
+                    } else if (lowerCat.includes('เกาหลี') || lowerCat.includes('korean')) {
+                        basePrice = 400;
+                    }
+
+                    // Area Premium adjustment
+                    let areaText = (item['neighborhood'] || item['address'] || '').toString().toLowerCase();
+                    let premium = 1.0;
+                    if (areaText.includes('สยาม') || areaText.includes('siam') || areaText.includes('ปทุมวัน') || 
+                        areaText.includes('ทองหล่อ') || areaText.includes('thong lo') || areaText.includes('thonglor') ||
+                        areaText.includes('พร้อมพงษ์') || areaText.includes('phrom phong') || areaText.includes('สุขุมวิท 39') || areaText.includes('สุขุมวิท 55')) {
+                        premium = 1.15; // 15% increase
+                    } else if (areaText.includes('อารีย์') || areaText.includes('ari') || areaText.includes('พญาไท') || 
+                               areaText.includes('อโศก') || areaText.includes('asoke') || areaText.includes('สุขุมวิท 21')) {
+                        premium = 1.05; // 5% increase
+                    }
+
+                    priceValue = Math.round(basePrice * premium);
+                    displayPrice = `~${priceValue}฿`;
                 } else {
-                    // Fallback to $ symbol counting
-                    const count = (priceRaw.match(/\$/g) || []).length;
-                    if (count >= 4) priceValue = 1500;
-                    else if (count === 3) priceValue = 850;
-                    else if (count === 2) priceValue = 450;
-                    else if (count === 1) priceValue = 250;
+                    displayPrice = `${priceValue}฿`;
                 }
 
                 let rating = parseFloat(item['totalScore'] || 4.0);
@@ -542,6 +689,7 @@
                     category: cat,
                     price: priceValue,
                     display_price: displayPrice || 'ไม่ระบุ',
+                    isEstimatedPrice: isEstimatedPrice,
                     rating: rating,
                     reviews: reviews,
                     base_score: Math.round(score),
@@ -662,55 +810,71 @@
 
         function renderTop3() {
             const top = top3Data.slice(0, 3);
-            document.getElementById('top-3-container').innerHTML = top.map((item, idx) => `
-                <div class="win95-window flex flex-col ${idx === 0 ? 'premium-rank-1 border-pink-500 border-4' : ''}">
-                    <div class="win95-title-bar ${idx === 0 ? 'bg-pink-600' : 'bg-gray-700'}">
-                        <span>#${idx+1} RECOMMENDED</span>
-                        <span class="text-[10px] bg-white text-black px-1">${item.scenario_score}% SCORE</span>
-                    </div>
-                    <div class="h-32 win95-inset m-1 overflow-hidden">
-                        <img src="${item.image}" class="w-full h-full object-cover grayscale-[0.2]">
-                    </div>
-                    <div class="p-2 flex-1 flex flex-col">
-                        <h3 class="font-bold text-sm truncate uppercase mb-1">${item.name}</h3>
-                        <div class="grid grid-cols-3 gap-1 mb-2">
-                            <div class="win95-inset bg-blue-50 p-1 text-center">
-                                <div class="text-[7px] uppercase text-gray-500">Rating</div>
-                                <div class="text-[10px] font-black text-blue-800">${item.rating} ⭐</div>
+            document.getElementById('top-3-container').innerHTML = top.map((item, idx) => {
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + ' ราคา เมนู')}`;
+                const priceHtml = item.isEstimatedPrice
+                    ? `<span title="ราคาประมาณการโดย AI">${item.display_price}</span>
+                       <a href="${searchUrl}" target="_blank" title="ค้นหาเมนูและราคาจริงใน Google" class="text-blue-500 hover:text-blue-700 text-[9px] font-normal inline-block ml-0.5">🔍</a>`
+                    : `<span>${item.display_price}</span>`;
+
+                return `
+                    <div class="win95-window flex flex-col ${idx === 0 ? 'premium-rank-1 border-pink-500 border-4' : ''}">
+                        <div class="win95-title-bar ${idx === 0 ? 'bg-pink-600' : 'bg-gray-700'}">
+                            <span>#${idx+1} RECOMMENDED</span>
+                            <span class="text-[10px] bg-white text-black px-1">${item.scenario_score}% SCORE</span>
+                        </div>
+                        <div class="h-32 win95-inset m-1 overflow-hidden">
+                            <img src="${item.image}" class="w-full h-full object-cover grayscale-[0.2]">
+                        </div>
+                        <div class="p-2 flex-1 flex flex-col">
+                            <h3 class="font-bold text-sm truncate uppercase mb-1">${item.name}</h3>
+                            <div class="grid grid-cols-3 gap-1 mb-2">
+                                <div class="win95-inset bg-blue-50 p-1 text-center">
+                                    <div class="text-[7px] uppercase text-gray-500">Rating</div>
+                                    <div class="text-[10px] font-black text-blue-800">${item.rating} ⭐</div>
+                                </div>
+                                <div class="win95-inset bg-green-50 p-1 text-center flex flex-col justify-center items-center">
+                                    <div class="text-[7px] uppercase text-gray-500">Price</div>
+                                    <div class="text-[10px] font-black text-green-800 flex items-center justify-center">${priceHtml}</div>
+                                </div>
+                                <div class="win95-inset bg-pink-50 p-1 text-center">
+                                    <div class="text-[7px] uppercase text-gray-500">Score</div>
+                                    <div class="text-[10px] font-black text-pink-600">${item.scenario_score}%</div>
+                                </div>
                             </div>
-                            <div class="win95-inset bg-green-50 p-1 text-center">
-                                <div class="text-[7px] uppercase text-gray-500">Price</div>
-                                <div class="text-[10px] font-black text-green-800">${item.display_price}</div>
+                            <div class="text-[10px] font-bold text-blue-900 mb-2">📍 ${item.area}</div>
+                            <div class="text-[9px] border-t border-dashed border-gray-400 pt-2 mb-2 text-gray-700">
+                                <b>AI WHY:</b> ${item.pros}
                             </div>
-                            <div class="win95-inset bg-pink-50 p-1 text-center">
-                                <div class="text-[7px] uppercase text-gray-500">Score</div>
-                                <div class="text-[10px] font-black text-pink-600">${item.scenario_score}%</div>
+                            <div class="flex gap-1 mt-auto">
+                                <a href="${item.map}" target="_blank" class="win95-button text-[9px] flex-1 text-center font-bold">MAP</a>
+                                <a href="${item.source}" target="_blank" class="win95-button text-[9px] flex-1 text-center">WEB</a>
                             </div>
                         </div>
-                        <div class="text-[10px] font-bold text-blue-900 mb-2">📍 ${item.area}</div>
-                        <div class="text-[9px] border-t border-dashed border-gray-400 pt-2 mb-2 text-gray-700">
-                            <b>AI WHY:</b> ${item.pros}
-                        </div>
-                        <div class="flex gap-1 mt-auto">
-                            <a href="${item.map}" target="_blank" class="win95-button text-[9px] flex-1 text-center font-bold">MAP</a>
-                            <a href="${item.source}" target="_blank" class="win95-button text-[9px] flex-1 text-center">WEB</a>
-                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderTable() {
-            document.getElementById('table-body').innerHTML = filteredData.map(item => `
-                <tr class="hover:bg-blue-50 border-b border-gray-300">
-                    <td class="p-2 font-bold">${item.name}</td>
-                    <td class="p-2 text-center text-green-800 font-bold">${item.display_price}</td>
-                    <td class="p-2 text-center font-bold text-blue-700">${item.rating} <span class="text-[8px] font-normal text-gray-500">(${item.reviews})</span></td>
-                    <td class="p-2 text-center font-black text-gray-700">${item.base_score}</td>
-                    <td class="p-2"><span class="badge bg-gray-100">${item.category}</span></td>
-                    <td class="p-2 text-[10px]">${item.area}</td>
-                </tr>
-            `).join('');
+            document.getElementById('table-body').innerHTML = filteredData.map(item => {
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + ' ราคา เมนู')}`;
+                const priceHtml = item.isEstimatedPrice 
+                    ? `<span class="text-green-700 font-bold" title="ราคาประมาณการโดย AI">${item.display_price}</span>
+                       <a href="${searchUrl}" target="_blank" title="ค้นหาเมนูและราคาจริงใน Google" class="ml-1 text-blue-500 hover:text-blue-700 text-[10px]">🔍</a>`
+                    : `<span class="text-green-800 font-bold">${item.display_price}</span>`;
+
+                return `
+                    <tr class="hover:bg-blue-50 border-b border-gray-300">
+                        <td class="p-2 font-bold">${item.name}</td>
+                        <td class="p-2 text-center">${priceHtml}</td>
+                        <td class="p-2 text-center font-bold text-blue-700">${item.rating} <span class="text-[8px] font-normal text-gray-500">(${item.reviews})</span></td>
+                        <td class="p-2 text-center font-black text-gray-700">${item.base_score}</td>
+                        <td class="p-2"><span class="badge bg-gray-100">${item.category}</span></td>
+                        <td class="p-2 text-[10px]">${item.area}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderAIInsights() {
@@ -771,54 +935,159 @@
 
         function generateAIResponse(msg) {
             msg = msg.toLowerCase();
+            
+            // Check for simple greetings
+            const greetings = ['สวัสดี', 'ทักทาย', 'hello', 'hi', 'ดีครับ', 'ดีค่ะ'];
+            const isGreeting = greetings.some(k => msg === k || msg.startsWith(k + ' ') || msg.endsWith(' ' + k));
+            if (isGreeting) {
+                return `สวัสดีครับ! ผมคือ <b>AI Data Assistant v2.0</b> ยินดีต้อนรับสู่แผงควบคุมร้านอาหารครับ 🤖<br><br>ผมสามารถค้นหาและจัดอันดับร้านอาหารให้คุณได้ทันที ลองถามผมแบบนี้ดูสิครับ:<br>• <i>"แนะนำร้านเด็ดสยาม"</i><br>• <i>"มีร้านชาบูอารีย์แนะนำไหม"</i><br>• <i>"หาร้านคาเฟ่ราคาประหยัดย่านทองหล่อ"</i>`;
+            }
+
+            // 1. ตรวจจับคำระบุชื่อร้านค้าเจาะจง
             const nameMatch = processedData.find(i => msg.includes(i.name.toLowerCase()));
+            if (nameMatch) {
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(nameMatch.name + ' ราคา เมนู')}`;
+                const priceText = nameMatch.isEstimatedPrice 
+                    ? `~${nameMatch.price}฿/คน (AI ประมาณการ) <a href="${searchUrl}" target="_blank" class="text-blue-500 underline text-[9px]">🔍 ค้นหาเมนู</a>`
+                    : `${nameMatch.price}฿/คน`;
+
+                return `
+                    🤖 <b>พบข้อมูลร้าน "${nameMatch.name}" ในระบบครับ:</b><br><br>
+                    📍 <b>ย่าน:</b> ${nameMatch.area}<br>
+                    🍲 <b>ประเภท:</b> ${nameMatch.category}<br>
+                    ⭐ <b>คะแนนเฉลี่ย:</b> ${nameMatch.rating} ดาว (${nameMatch.reviews} รีวิว)<br>
+                    💰 <b>ราคาโดยประมาณ:</b> ${priceText}<br>
+                    🎯 <b>คะแนนความคุ้มค่า AI:</b> ${nameMatch.base_score}%<br>
+                    💡 <b>จุดเด่นจาก AI:</b> ${nameMatch.pros}<br><br>
+                    <div class="flex gap-2 mt-2">
+                        <a href="${nameMatch.map}" target="_blank" class="win95-button text-[9px] font-bold text-center inline-block py-0.5 px-2">🗺️ เปิดแผนที่</a>
+                        <a href="${nameMatch.source}" target="_blank" class="win95-button text-[9px] text-center inline-block py-0.5 px-2">🌐 ดูข้อมูลร้าน</a>
+                    </div>
+                `;
+            }
+
+            // 2. ตรวจจับตัวกรองพื้นที่
             const areas = {
-                'สยาม': ['สยาม', 'siam', 'ปทุมวัน'],
+                'สยาม': ['สยาม', 'siam', 'ปทุมวัน', 'pathum wan', 'สยามสแควร์'],
                 'อารีย์': ['อารีย์', 'ari', 'พญาไท', 'สามเสน'],
                 'ทองหล่อ': ['ทองหล่อ', 'thong lo', 'thonglor', 'สุขุมวิท 55'],
                 'อโศก': ['อโศก', 'asoke', 'สุขุมวิท 21', 'terminal 21'],
                 'พร้อมพงษ์': ['พร้อมพงษ์', 'phrom phong', 'สุขุมวิท 39', 'emquartier']
             };
-            const categories = ['ญี่ปุ่น', 'ไทย', 'ปิ้งย่าง', 'ชาบู', 'คาเฟ่', 'อิตาเลียน', 'ราเมง', 'เกาหลี', 'จีน', 'ซูชิ'];
-            const intentKeywords = ['ถูก', 'ประหยัด', 'คุ้ม', 'แพง', 'พิเศษ', 'หรู', 'บริษัท', 'กลุ่ม', 'ทีม', 'เลี้ยง'];
-            const recommendKeywords = ['แนะนำ', 'แนะนำหน่อย', 'หาร้าน', 'มีร้าน', 'ไหนดี', 'บอกหน่อย'];
-            const hasLocation = Object.values(areas).flat().some(k => msg.includes(k));
-            const hasCategory = categories.some(k => msg.includes(k));
-            const hasIntent = intentKeywords.some(k => msg.includes(k));
-            const hasRecommendIntent = recommendKeywords.some(k => msg.includes(k));
-            const chatterKeywords = ['สวัสดี', 'ทักทาย', 'เป็นไง', 'กินข้าวยัง', 'กินยัง', 'ชื่ออะไร', 'หิว', 'ทำอะไร', 'สบายดี'];
-            const isChatter = chatterKeywords.some(k => msg.includes(k)) && !hasLocation && !hasCategory && !nameMatch && !hasIntent;
-            if (isChatter || (!hasLocation && !hasCategory && !hasIntent && !nameMatch && !hasRecommendIntent)) {
-                return "ขออภัยครับ ฉันเป็น <b>AI Data Assistant</b> ที่ถูกโปรแกรมให้เข้าถึงเฉพาะ <b>ฐานข้อมูลร้านอาหาร</b> เท่านั้น ไม่สามารถพูดคุยเรื่องทั่วไปหรือตอบคำถามส่วนตัวได้ครับ <br><br>ลองถามเจาะจง เช่น <i>'ร้านญี่ปุ่นย่านสยาม'</i> หรือ <i>'แนะนำร้านปิ้งย่าง'</i> ดูนะครับ";
+
+            let matchedArea = null;
+            for (let a in areas) {
+                if (areas[a].some(key => msg.includes(key))) {
+                    matchedArea = a;
+                    break;
+                }
             }
-            if (nameMatch) {
-                return `พบข้อมูลร้าน <b>${nameMatch.name}</b> ในฐานข้อมูลครับ! อยู่ย่าน ${nameMatch.area} เรตติ้ง ${nameMatch.rating} ดาว (${nameMatch.reviews} รีวิว) AI วิเคราะห์ว่า${nameMatch.pros}ครับ`;
+
+            // 3. ตรวจจับหมวดหมู่อาหาร
+            const categories = {
+                'อาหารญี่ปุ่น': ['ญี่ปุ่น', 'japanese', 'ซูชิ', 'sushi', 'ปลาดิบ', 'ราเมง', 'ramen', 'ทงคัตสึ'],
+                'อาหารไทย': ['ไทย', 'thai', 'ส้มตำ', 'ก๋วยเตี๋ยว', 'ต้มยำ', 'อาหารตามสั่ง'],
+                'ปิ้งย่าง': ['ปิ้งย่าง', 'bbq', 'หมูกระทะ', 'yakiniku', 'ย่าง'],
+                'ชาบู': ['ชาบู', 'shabu', 'สุกี้', 'hotpot', 'หม้อไฟ'],
+                'คาเฟ่': ['คาเฟ่', 'cafe', 'กาแฟ', 'coffee', 'เบเกอรี่', 'ขนม', 'ของหวาน', 'dessert'],
+                'อิตาเลียน': ['อิตาเลียน', 'italian', 'สเต็ก', 'steak', 'พาสต้า', 'pizza', 'พิซซ่า']
+            };
+
+            let matchedCategory = null;
+            for (let c in categories) {
+                if (categories[c].some(key => msg.includes(key))) {
+                    matchedCategory = c;
+                    break;
+                }
             }
+
+            // 4. ตรวจเจตนาด้านราคา (งบประมาณ)
+            const isCheapQuery = msg.includes('ถูก') || msg.includes('ประหยัด') || msg.includes('คุ้ม') || msg.includes('ไม่แพง') || msg.includes('ราคาเบา');
+            const isExpensiveQuery = msg.includes('แพง') || msg.includes('หรู') || msg.includes('พิเศษ') || msg.includes('premium') || msg.includes('ดีๆ');
+
+            // กรองร้านค้าเบื้องต้น
             let matches = [...processedData];
-            if (hasLocation) {
-                for (let a in areas) {
-                    if (areas[a].some(key => msg.includes(key))) {
-                        matches = matches.filter(i => (i.area + ' ' + i.address).toLowerCase().includes(a) || areas[a].some(k => i.address.toLowerCase().includes(k)));
-                        break;
-                    }
-                }
+
+            if (matchedArea) {
+                const areaKeys = areas[matchedArea];
+                matches = matches.filter(i => 
+                    (i.area + ' ' + i.address).toLowerCase().includes(matchedArea.toLowerCase()) || 
+                    areaKeys.some(k => i.address.toLowerCase().includes(k)) ||
+                    areaKeys.some(k => i.area.toLowerCase().includes(k))
+                );
             }
-            if (hasCategory) {
-                for (let cat of categories) {
-                    if (msg.includes(cat)) {
-                        matches = matches.filter(i => i.category.includes(cat));
-                        break;
-                    }
-                }
+
+            if (matchedCategory) {
+                matches = matches.filter(i => i.category.includes(matchedCategory));
             }
-            const isCheap = msg.includes('ถูก') || msg.includes('ประหยัด');
-            if (isCheap) matches = matches.filter(i => i.price <= 450).sort((a,b) => a.price - b.price);
-            else matches = matches.sort((a,b) => b.base_score - a.base_score);
+
+            // จัดการคัดแยกราคา
+            if (isCheapQuery) {
+                // เน้นความประหยัด เรียงจากถูกไปแพง
+                matches = matches.filter(i => i.price <= 450).sort((a, b) => a.price - b.price);
+            } else if (isExpensiveQuery) {
+                // เน้นความหรูหรา
+                matches = matches.filter(i => i.price > 450).sort((a, b) => b.price - a.price);
+            } else {
+                // เรียงตาม AI base_score
+                matches = matches.sort((a, b) => b.base_score - a.base_score);
+            }
+
+            // หากมีร้านค้าตรงเงื่อนไข
             if (matches.length > 0) {
-                const res = matches[0];
-                return `ฉันคัดเลือกจากฐานข้อมูลมาให้แล้วครับ แนะนำร้าน <b>${res.name}</b> ย่าน ${res.area} ครับ <br>เหตุผล: ${res.pros} (เรตติ้ง ${res.rating}, ${res.reviews} รีวิว)`;
+                // ดึงผลลัพธ์สูงสุด 3 ร้านตามที่ผู้ใช้ขอ
+                const topMatches = matches.slice(0, 3);
+                
+                let titleText = "✨ <b>ร้านอาหารแนะนำที่ดีที่สุดตามเงื่อนไขของคุณครับ:</b>";
+                if (matchedArea && matchedCategory) {
+                    titleText = `✨ <b>แนะนำร้าน [${matchedCategory}] ย่าน [${matchedArea}] ที่ดีที่สุด 3 อันดับแรกครับ:</b>`;
+                } else if (matchedArea) {
+                    titleText = `✨ <b>แนะนำร้านอาหารย่าน [${matchedArea}] ที่น่าสนใจที่สุด 3 อันดับแรกครับ:</b>`;
+                } else if (matchedCategory) {
+                    titleText = `✨ <b>แนะนำร้าน [${matchedCategory}] ยอดฮิต 3 อันดับแรกครับ:</b>`;
+                }
+
+                if (isCheapQuery) titleText += " (เน้นงบประหยัด คุ้มค่าเงิน 💰)";
+                if (isExpensiveQuery) titleText += " (เน้นร้านพิเศษ บรรยากาศหรูหรา 🍷)";
+
+                let listHtml = `${titleText}<br><br>`;
+
+                topMatches.forEach((res, index) => {
+                    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(res.name + ' ราคา เมนู')}`;
+                    const priceText = res.isEstimatedPrice 
+                        ? `~${res.price}฿/คน (AI ประมาณการ) <a href="${searchUrl}" target="_blank" class="text-blue-500 underline text-[8px]" title="ค้นหาเมนูใน Google">🔍 ค้นหาเมนู</a>`
+                        : `${res.price}฿/คน`;
+
+                    listHtml += `
+                        <div class="border-b border-gray-300 pb-2 mb-2 last:border-b-0 last:pb-0">
+                            <b>${index + 1}. 🌟 ${res.name}</b><br>
+                            📍 <span class="text-[10px] text-blue-900 font-bold">${res.area}</span> | 🍲 <span class="text-[10px] text-gray-600 font-bold">${res.category}</span><br>
+                            ⭐ คะแนน: <b>${res.rating}</b> (${res.reviews} รีวิว) | AI Score: <b>${res.base_score}%</b><br>
+                            💰 ราคาประมาณ: <b>${priceText}</b><br>
+                            💡 <b>เหตุผล AI:</b> ${res.pros}<br>
+                            <div class="flex gap-1.5 mt-1">
+                                <a href="${res.map}" target="_blank" class="win95-button text-[8px] py-0 px-1 inline-block font-bold">🗺️ MAP</a>
+                                <a href="${res.source}" target="_blank" class="win95-button text-[8px] py-0 px-1 inline-block">🌐 WEB</a>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // หากมีผลลัพธ์มากกว่า 3 ตัว แจ้งผู้ใช้เพิ่มเติม
+                if (matches.length > 3) {
+                    listHtml += `<p class="text-[10px] text-gray-500 italic text-right mt-1">*ยังมีร้านค้าอื่นตรงเงื่อนไขอีก ${matches.length - 3} ร้านที่แผงควบคุมหลัก</p>`;
+                }
+
+                return listHtml;
             }
-            return "ฉันไม่พบร้านอาหารในฐานข้อมูลที่ตรงกับเงื่อนไขนั้นครับ ลองเปลี่ยนชื่อย่านหรือประเภทอาหารดูนะครับ";
+
+            // คำตอบสุภาพเมื่อไม่พบผลลัพธ์ตรงกัน
+            let failText = "ขออภัยครับ ผมไม่พบร้านอาหารในฐานข้อมูลที่ตรงกับเงื่อนไขนั้นเลยครับ 😅<br><br>";
+            failText += "ลองเปลี่ยนรูปแบบคำถามเป็นคำสำคัญที่กระชับ เช่น:<br>";
+            failText += "• <i>'ร้านอาหารย่านสยาม'</i> (ระบุย่าน)<br>";
+            failText += "• <i>'ปิ้งย่าง อารีย์'</i> (ระบุประเภท + ย่าน)<br>";
+            failText += "• <i>'ร้านประหยัดพร้อมพงษ์'</i> (ระบุงบ + ย่าน)";
+            return failText;
         }
     </script>
 </body>
