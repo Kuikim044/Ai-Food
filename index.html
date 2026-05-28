@@ -96,20 +96,7 @@
             50% { box-shadow: 0 0 20px var(--win-pink); }
             100% { box-shadow: 0 0 5px var(--win-pink); }
         }
-        .premium-rank-1 {
-            animation: pulse-glow 2s infinite;
-            border: 4px solid var(--win-pink);
-        }
-        .premium-rank-2 {
-            animation: pulse-glow 3s infinite;
-            border: 3px solid var(--win-pink);
-            opacity: 0.85;
-        }
-        .premium-rank-3 {
-            animation: pulse-glow 4s infinite;
-            border: 2px solid var(--win-pink);
-            opacity: 0.7;
-        }
+        .premium-rank-1 { animation: pulse-glow 2s infinite; }
 
         #loading-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5);
@@ -164,7 +151,7 @@
             </div>
             <div class="p-2 flex justify-end gap-2 bg-[#c0c0c0] border-t border-gray-400 pt-3">
                 <button id="win95-alert-retry-btn" class="win95-button font-bold text-xs min-w-[100px] hidden">Bypass CORS</button>
-                <button onclick="closeWin95Alert(); location.reload();" class="win95-button font-bold text-xs min-w-[70px]">OK</button>
+                <button onclick="closeWin95Alert()" class="win95-button font-bold text-xs min-w-[70px]">OK</button>
             </div>
         </div>
     </div>
@@ -325,16 +312,14 @@
         let processedData = [];
         let filteredData = [];
         let top3Data = [];
-        let isScraping = false;
+        let currentSort = { key: 'base_score', asc: false };
 
         window.onload = () => { initApp(); initFilters(); initChat(); };
 
         async function triggerScrape() {
             if (!confirm("ต้องการเริ่มระบบ AI Scraper ใหม่ใช่หรือไม่? (ใช้เวลาประมาณ 1-2 นาที)")) return;
             
-            if (isScraping) { alert('Scrape is already in progress. Please wait.'); return; }
-            isScraping = true;
-
+            // 1. บันทึกข้อมูลและจำนวนร้านค้าล่าสุดก่อนเริ่มทำ Scrape (Pre-Scrape state)
             const initialDataString = JSON.stringify(rawData);
             const initialCount = rawData.length;
             
@@ -366,7 +351,6 @@
                     true, // Is error
                     e.toString()
                 );
-                isScraping = false;
             }
         }
 
@@ -432,7 +416,6 @@
                                     false
                                 );
                             }, 1500);
-                            isScraping = false;
                             return;
                         }
                     }
@@ -532,7 +515,7 @@
         async function initApp() {
             showLoading(true);
             try {
-                const response = await fetch(`${API_URL}?t=${Date.now()}`);
+                const response = await fetch(API_URL);
                 const json = await response.json();
                 rawData = json.value || json;
                 processData();
@@ -565,47 +548,15 @@
             }
         }
 
-        function generateDetailedReasoning(item, rank) {
-            // Build comprehensive reasoning for TOP 3 cards
-            // 1. Why ranked above competitors
-            const superiority = [];
-            if (item.rating >= 4.7) superiority.push('สูงสุดในเรตติ้ง');
-            if (item.reviews > 1000) superiority.push('ฐานรีวิวหนาแน่น');
-            if (item.isTrusted) superiority.push('มาตรฐานความเชื่อถือสูง');
-            // 2. Scenario‑specific reasoning (already applied in scoring)
-            const scenarioReason = `สอดคล้องกับสถานการณ์ "${document.querySelector('input[name="scenario"]:checked').value}"`;
-            // 3. Trade‑offs
-            const tradeOffs = [];
-            if (item.isEstimatedPrice) tradeOffs.push('ราคาประมาณการ');
-            if (item.price > 600) tradeOffs.push('ราคาสูง');
-            // 4. Group suitability
-            const groupFit = rank === 1 ? 'เหมาะที่สุดสำหรับกลุ่มใหญ่' : 'เหมาะกับกลุ่มขนาดกลางหรือเล็ก';
-            // 5. Risk analysis
-            const risk = item.rating < 4.5 ? 'ความเสี่ยงความพึงพอใจต่ำ' : 'ความเสี่ยงต่ำ';
-            // 6. Confidence
-            const confidence = Math.round(item.base_score) + '% ความมั่นใจ';
-            // 7. Operational concerns (e.g., opening hours unknown)
-            const ops = item.open_hours ? '' : 'ข้อมูลเวลาเปิดทำการขาดหาย';
-            // 8. Peak‑hour risk (simplified)
-            const peakRisk = (item.area.includes('สยาม') || item.area.includes('ทองหล่อ')) ? 'ความแออัดในช่วงไฮโฟกัส' : '';
-            // 9. Budget efficiency
-            const budget = item.isEstimatedPrice ? 'ประมาณการงบประมาณอาจเปลี่ยนแปลง' : `ราคา ${item.display_price}`;
-            // 10. Strength meter (visual bar width based on score)
-            const strengthBar = `<div class="w-full bg-gray-200 h-1"><div style="width:${item.base_score}%;background:${item.base_score>80?'var(--win-pink)':'var(--win-blue)'};height:100%"></div></div>`;
-            return `
-                <div class="text-xs mb-1"><b>ทำไม #${rank}?</b> ${superiority.join(', ')}</div>
-                <div class="text-xs mb-1"><b>สถานการณ์:</b> ${scenarioReason}</div>
-                <div class="text-xs mb-1"><b>การพิจารณาแลกเปลี่ยน:</b> ${tradeOffs.join(', ') || 'ไม่มี'}</div>
-                <div class="text-xs mb-1"><b>กลุ่ม:</b> ${groupFit}</div>
-                <div class="text-xs mb-1"><b>ความเสี่ยง:</b> ${risk} ${peakRisk}</div>
-                <div class="text-xs mb-1"><b>ความมั่นใจ:</b> ${confidence}</div>
-                <div class="text-xs mb-1"><b>งบประมาณ:</b> ${budget}</div>
-                <div class="text-xs mb-1">${ops}</div>
-                ${strengthBar}
-            `;
+        function generateAIReasoning(item) {
+            const reasons = [];
+            if (item.rating >= 4.7) reasons.push("เรตติ้งสูงสุดในย่าน");
+            if (item.reviews > 1000) reasons.push("ฐานรีวิวแน่นที่สุด");
+            if (item.price <= 300) reasons.push("คุ้มค่าราคาประหยัด");
+            if (item.isTrusted) reasons.push("มาตรฐานสูงไว้ใจได้");
+            if (item.category === 'ปิ้งย่าง' || item.category === 'ชาบู') reasons.push("เหมาะสังสรรค์กลุ่มใหญ่");
+            return reasons.length > 0 ? reasons.slice(0, 2).join(" & ") : "ตัวเลือกที่สมดุลที่สุด";
         }
-        // Preserve original generateAIReasoning for backward compatibility
-        function generateAIReasoning(item) { return generateDetailedReasoning(item, 0); }
 
         function processData() {
             const uniqueMap = new Map();
@@ -756,38 +707,7 @@
             filteredData = [...baseFiltered].sort((a,b) => b.rating - a.rating);
 
             top3Data = baseFiltered.map(item => {
-                            let s = item.base_score;
-            if (scenario === 'safe') {
-                // 50% rating, 50% reviews (normalized to 100)
-                const ratingScore = item.rating * 20 * 0.5; // rating out of 5 => max 100
-                const reviewScore = Math.min(100, (item.reviews / 500) * 100) * 0.5;
-                s = ratingScore + reviewScore;
-            } else if (scenario === 'cheap') {
-                // 70% price (lower price better), 30% rating
-                const priceScore = Math.max(0, 100 - (item.price / 10)); // assuming price up to 1000, scale to 0-100
-                const ratingScore = item.rating * 20 * 0.3;
-                s = priceScore * 0.7 + ratingScore;
-            } else if (scenario === 'fast') {
-                // 50% rating, 20% popularity, +30 bonus for fast‑food categories
-                const ratingScore = item.rating * 20 * 0.5;
-                const popScore = Math.min(100, (item.reviews / 500) * 100) * 0.2;
-                const bonus = ['ราเมง', 'อาหารญี่ปุ่น'].includes(item.category) ? 30 : 0;
-                s = ratingScore + popScore + bonus;
-            } else if (scenario === 'work') {
-                // 60% rating, 10% popularity, +25 bonus for cafes
-                const ratingScore = item.rating * 20 * 0.6;
-                const popScore = Math.min(100, (item.reviews / 500) * 100) * 0.1;
-                const bonus = item.category === 'คาเฟ่' ? 25 : 0;
-                s = ratingScore + popScore + bonus;
-            } else if (scenario === 'large') {
-                // 50% rating, 20% popularity, +30 bonus for group‑friendly categories
-                const ratingScore = item.rating * 20 * 0.5;
-                const popScore = Math.min(100, (item.reviews / 500) * 100) * 0.2;
-                const bonusCategories = ['ปิ้งย่าง', 'ชาบู', 'อาหารไทย'];
-                const bonus = bonusCategories.includes(item.category) ? 30 : 0;
-                s = ratingScore + popScore + bonus;
-            }
-            return { ...item, scenario_score: Math.min(100, Math.round(s)) };
+                let s = item.base_score;
                 if (scenario === 'safe') s = (item.rating * 15) + Math.min(25, item.reviews / 20);
                 else if (scenario === 'cheap') s = (1000 - item.price) / 10 + (item.rating * 5);
                 else if (scenario === 'fast') {
@@ -851,7 +771,7 @@
             }).join('');
         }
 
-        
+        function renderTop3() {
             const top = top3Data.slice(0, 3);
             document.getElementById('top-3-container').innerHTML = top.map((item, idx) => {
                 const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + ' ราคา เมนู')}`;
@@ -900,25 +820,6 @@
         }
 
         function renderTable() {
-    document.getElementById('table-body').innerHTML = filteredData.map((item, idx) => {
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + ' ราคา เมนู')}`;
-        const priceHtml = item.isEstimatedPrice
-            ? `<span class="text-green-700 font-bold" title="ราคาประมาณการโดย AI">${item.display_price}</span>
-               <a href="${searchUrl}" target="_blank" title="ค้นหาเมนูและราคาจริงใน Google" class="ml-1 text-blue-500 hover:text-blue-700 text-[10px]">🔍</a>`
-            : `<span class="text-green-800 font-bold">${item.display_price}</span>`;
-        return `
-            <tr class="hover:bg-blue-50 border-b border-gray-300">
-                <td class="p-2 font-bold">${item.name}</td>
-                <td class="p-2 text-center">${priceHtml}</td>
-                <td class="p-2 text-center font-bold text-blue-700">${item.rating} <span class="text-[8px] font-normal text-gray-500">(${item.reviews})</span></td>
-                <td class="p-2 text-center font-black text-gray-700">${item.base_score}</td>
-                <td class="p-2"><span class="badge bg-gray-100">${item.category}</span></td>
-                <td class="p-2 text-[10px]">${item.area}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
             document.getElementById('table-body').innerHTML = filteredData.map(item => {
                 const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + ' ราคา เมนู')}`;
                 const priceHtml = item.isEstimatedPrice 
@@ -927,7 +828,7 @@
                     : `<span class="text-green-800 font-bold">${item.display_price}</span>`;
 
                 return `
-                    <tr class="hover:bg-blue-50 border-b border-gray-300 cursor-pointer" onclick="showDetail(${idx})">>
+                    <tr class="hover:bg-blue-50 border-b border-gray-300">
                         <td class="p-2 font-bold">${item.name}</td>
                         <td class="p-2 text-center">${priceHtml}</td>
                         <td class="p-2 text-center font-bold text-blue-700">${item.rating} <span class="text-[8px] font-normal text-gray-500">(${item.reviews})</span></td>
