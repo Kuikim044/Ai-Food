@@ -96,7 +96,20 @@
             50% { box-shadow: 0 0 20px var(--win-pink); }
             100% { box-shadow: 0 0 5px var(--win-pink); }
         }
-        .premium-rank-1 { animation: pulse-glow 2s infinite; }
+        .premium-rank-1 {
+            animation: pulse-glow 2s infinite;
+            border: 4px solid var(--win-pink);
+        }
+        .premium-rank-2 {
+            animation: pulse-glow 3s infinite;
+            border: 3px solid var(--win-pink);
+            opacity: 0.85;
+        }
+        .premium-rank-3 {
+            animation: pulse-glow 4s infinite;
+            border: 2px solid var(--win-pink);
+            opacity: 0.7;
+        }
 
         #loading-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5);
@@ -519,7 +532,7 @@
         async function initApp() {
             showLoading(true);
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(`${API_URL}?t=${Date.now()}`);
                 const json = await response.json();
                 rawData = json.value || json;
                 processData();
@@ -552,15 +565,47 @@
             }
         }
 
-        function generateAIReasoning(item) {
-            const reasons = [];
-            if (item.rating >= 4.7) reasons.push("เรตติ้งสูงสุดในย่าน");
-            if (item.reviews > 1000) reasons.push("ฐานรีวิวแน่นที่สุด");
-            if (item.price <= 300) reasons.push("คุ้มค่าราคาประหยัด");
-            if (item.isTrusted) reasons.push("มาตรฐานสูงไว้ใจได้");
-            if (item.category === 'ปิ้งย่าง' || item.category === 'ชาบู') reasons.push("เหมาะสังสรรค์กลุ่มใหญ่");
-            return reasons.length > 0 ? reasons.slice(0, 2).join(" & ") : "ตัวเลือกที่สมดุลที่สุด";
+        function generateDetailedReasoning(item, rank) {
+            // Build comprehensive reasoning for TOP 3 cards
+            // 1. Why ranked above competitors
+            const superiority = [];
+            if (item.rating >= 4.7) superiority.push('สูงสุดในเรตติ้ง');
+            if (item.reviews > 1000) superiority.push('ฐานรีวิวหนาแน่น');
+            if (item.isTrusted) superiority.push('มาตรฐานความเชื่อถือสูง');
+            // 2. Scenario‑specific reasoning (already applied in scoring)
+            const scenarioReason = `สอดคล้องกับสถานการณ์ "${document.querySelector('input[name="scenario"]:checked').value}"`;
+            // 3. Trade‑offs
+            const tradeOffs = [];
+            if (item.isEstimatedPrice) tradeOffs.push('ราคาประมาณการ');
+            if (item.price > 600) tradeOffs.push('ราคาสูง');
+            // 4. Group suitability
+            const groupFit = rank === 1 ? 'เหมาะที่สุดสำหรับกลุ่มใหญ่' : 'เหมาะกับกลุ่มขนาดกลางหรือเล็ก';
+            // 5. Risk analysis
+            const risk = item.rating < 4.5 ? 'ความเสี่ยงความพึงพอใจต่ำ' : 'ความเสี่ยงต่ำ';
+            // 6. Confidence
+            const confidence = Math.round(item.base_score) + '% ความมั่นใจ';
+            // 7. Operational concerns (e.g., opening hours unknown)
+            const ops = item.open_hours ? '' : 'ข้อมูลเวลาเปิดทำการขาดหาย';
+            // 8. Peak‑hour risk (simplified)
+            const peakRisk = (item.area.includes('สยาม') || item.area.includes('ทองหล่อ')) ? 'ความแออัดในช่วงไฮโฟกัส' : '';
+            // 9. Budget efficiency
+            const budget = item.isEstimatedPrice ? 'ประมาณการงบประมาณอาจเปลี่ยนแปลง' : `ราคา ${item.display_price}`;
+            // 10. Strength meter (visual bar width based on score)
+            const strengthBar = `<div class="w-full bg-gray-200 h-1"><div style="width:${item.base_score}%;background:${item.base_score>80?'var(--win-pink)':'var(--win-blue)'};height:100%"></div></div>`;
+            return `
+                <div class="text-xs mb-1"><b>ทำไม #${rank}?</b> ${superiority.join(', ')}</div>
+                <div class="text-xs mb-1"><b>สถานการณ์:</b> ${scenarioReason}</div>
+                <div class="text-xs mb-1"><b>การพิจารณาแลกเปลี่ยน:</b> ${tradeOffs.join(', ') || 'ไม่มี'}</div>
+                <div class="text-xs mb-1"><b>กลุ่ม:</b> ${groupFit}</div>
+                <div class="text-xs mb-1"><b>ความเสี่ยง:</b> ${risk} ${peakRisk}</div>
+                <div class="text-xs mb-1"><b>ความมั่นใจ:</b> ${confidence}</div>
+                <div class="text-xs mb-1"><b>งบประมาณ:</b> ${budget}</div>
+                <div class="text-xs mb-1">${ops}</div>
+                ${strengthBar}
+            `;
         }
+        // Preserve original generateAIReasoning for backward compatibility
+        function generateAIReasoning(item) { return generateDetailedReasoning(item, 0); }
 
         function processData() {
             const uniqueMap = new Map();
@@ -806,7 +851,7 @@
             }).join('');
         }
 
-        function renderTop3() {
+        
             const top = top3Data.slice(0, 3);
             document.getElementById('top-3-container').innerHTML = top.map((item, idx) => {
                 const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + ' ราคา เมนู')}`;
