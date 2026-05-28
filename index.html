@@ -13,12 +13,13 @@
             --win-white: #ffffff;
             --win-dark-gray: #808080;
             --win-border-light: #dfdfdf;
-            --win-pink: #ff0080;
-            --win-blue: #000080;
+            /* Warm theme: yellow / brown / orange */
+            --win-pink: #d97706; /* used as primary title-bar color */
+            --win-blue: #7c2d12; /* deep brown accent */
         }
 
         body {
-            background-color: #55aaaa;
+            background-color: #f59e0b; /* amber */
             font-family: 'Kanit', 'MS Sans Serif', sans-serif;
             image-rendering: pixelated;
         }
@@ -92,9 +93,9 @@
         }
 
         @keyframes pulse-glow {
-            0% { box-shadow: 0 0 5px var(--win-pink); }
-            50% { box-shadow: 0 0 20px var(--win-pink); }
-            100% { box-shadow: 0 0 5px var(--win-pink); }
+            0% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.70); }
+            50% { box-shadow: 0 0 22px rgba(180, 83, 9, 0.90); }
+            100% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.70); }
         }
         .premium-rank-1 { animation: pulse-glow 2s infinite; }
 
@@ -120,10 +121,10 @@
 
     <div id="loading-overlay">
         <div class="win95-window p-4 w-64">
-            <div class="win95-title-bar mb-4"><span>AI System Processing</span></div>
+                <div class="win95-title-bar mb-4"><span>AI System Processing</span></div>
             <p id="loading-text" class="text-center mb-4 text-xs font-bold leading-tight">กำลังประมวลผลข้อมูล AI 2.0...</p>
             <div class="win95-inset h-4 w-full bg-gray-200">
-                <div id="progress-bar" class="h-full bg-blue-800 w-0 transition-all duration-500"></div>
+                    <div id="progress-bar" class="h-full bg-amber-800 w-0 transition-all duration-500"></div>
             </div>
         </div>
     </div>
@@ -150,7 +151,7 @@
                 </div>
             </div>
             <div class="p-2 flex justify-end gap-2 bg-[#c0c0c0] border-t border-gray-400 pt-3">
-                <button id="win95-alert-retry-btn" class="win95-button font-bold text-xs min-w-[100px] hidden">Bypass CORS</button>
+                <button id="win95-alert-retry-btn" class="win95-button font-bold text-xs min-w-[100px] hidden">Retry Load</button>
                 <button onclick="closeWin95Alert()" class="win95-button font-bold text-xs min-w-[70px]">OK</button>
             </div>
         </div>
@@ -166,7 +167,7 @@
                 <div class="flex gap-2 mb-1">
                     <span class="badge bg-blue-100 text-blue-800 border-blue-400">n8n</span>
                     <span class="badge bg-orange-100 text-orange-800 border-orange-400">Google Gemini CLI</span>
-                    <span class="badge bg-pink-100 text-pink-800 border-pink-400">Apify</span>
+                    <span class="badge bg-amber-100 text-amber-900 border-amber-600">Apify</span>
                     <span class="badge bg-green-100 text-green-800 border-green-400">Google Sheet</span>
                 </div>
                 <p class="text-xs font-bold text-gray-800">ผู้ทำ: นาย ธีรเมธ แซ่เบ้</p>
@@ -178,7 +179,7 @@
         <div class="p-4 bg-[#c0c0c0] grid grid-cols-1 lg:grid-cols-12 gap-4">
             <aside class="lg:col-span-3 flex flex-col gap-4">
                 <div class="win95-window p-3">
-                    <div class="win95-title-bar mb-2"><span>📍 เลือกย่าน (Mapping 2.0)</span></div>
+                <div class="win95-title-bar mb-2"><span>📍 เลือกย่าน (Mapping 2.0)</span></div>
                     <div id="area-filters" class="flex flex-wrap gap-2 p-2 win95-inset h-auto">
                         <button class="win95-button text-xs active" data-area="all">ทั้งหมด</button>
                         <button class="win95-button text-xs" data-area="สยาม">สยาม</button>
@@ -209,7 +210,7 @@
                     </div>
                     <div class="win95-window p-2 text-center">
                         <div class="text-[10px] uppercase font-bold text-gray-600">Avg AI Score</div>
-                        <div id="stat-score" class="text-2xl font-black text-pink-600">0</div>
+                        <div id="stat-score" class="text-2xl font-black text-amber-800">0</div>
                     </div>
                     <div class="win95-window p-2 text-center">
                         <div class="text-[10px] uppercase font-bold text-gray-600">Trusted Store</div>
@@ -218,7 +219,7 @@
                 </div>
 
                 <div class="win95-window overflow-hidden">
-                    <div class="win95-title-bar bg-blue-800"><span>⭐ TOP 3 AI INTELLIGENCE SELECTION</span></div>
+                    <div class="win95-title-bar bg-amber-800"><span>⭐ TOP 3 AI INTELLIGENCE SELECTION</span></div>
                     
                     <div class="bg-gray-200 p-2 border-b border-black flex flex-wrap gap-x-4 gap-y-2 items-center text-xs">
                         <span class="font-bold border-r border-gray-400 pr-2">🎯 สถานการณ์:</span>
@@ -240,7 +241,7 @@
                         <span>📂 RESTAURANT DATABASE (ALL RESULTS)</span>
                         <input type="text" id="search-input" placeholder="Search..." class="text-black px-2 py-0 text-xs w-32 win95-inset">
                     </div>
-                    <div class="max-h-96 overflow-y-auto scroll-win95">
+                    <div class="max-h-[520px] overflow-y-auto scroll-win95">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="sticky top-0 bg-gray-200 z-10">
                                 <tr class="border-b-2 border-black">
@@ -258,14 +259,14 @@
                 </div>
 
                 <div class="win95-window">
-                    <div class="win95-title-bar bg-green-800"><span>🤖 AI ANALYSIS & INSIGHTS 2.0</span></div>
-                    <div id="ai-insights" class="p-4 bg-white text-sm italic text-gray-700 leading-relaxed win95-inset m-2"></div>
+                    <div class="win95-title-bar bg-amber-900"><span>🤖 AI ANALYSIS & INSIGHTS 2.0</span></div>
+                    <div id="ai-insights" class="p-3 bg-white text-sm text-gray-800 leading-relaxed win95-inset m-2"></div>
                 </div>
 
                 <!-- NEW: Human Review Flag Section -->
                 <div class="win95-window">
-                    <div class="win95-title-bar bg-red-700"><span>🚩 HUMAN REVIEW FLAGS (LOW CONFIDENCE)</span></div>
-                    <div id="human-flags" class="p-2 bg-white win95-inset m-2 max-h-40 overflow-y-auto scroll-win95">
+                    <div class="win95-title-bar bg-orange-900"><span>🚩 HUMAN REVIEW FLAGS (LOW CONFIDENCE)</span></div>
+                    <div id="human-flags" class="p-2 bg-white win95-inset m-2 max-h-56 overflow-y-auto scroll-win95">
                         <!-- Flagged items here -->
                     </div>
                 </div>
@@ -278,10 +279,10 @@
         </footer>
     </div>
 
-    <div id="chat-window" class="fixed bottom-4 right-4 w-72 md:w-80 win95-window z-50">
+    <div id="chat-window" class="fixed bottom-4 right-4 w-80 md:w-96 win95-window z-50">
         <div class="win95-title-bar cursor-move" id="chat-header">
             <div class="flex items-center gap-2">
-                <div class="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[8px] text-pink-600 font-bold">AI</div>
+                <div class="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[8px] text-amber-800 font-bold">AI</div>
                 <span>Food Assistant Chat</span>
             </div>
             <div class="title-controls">
@@ -289,7 +290,7 @@
             </div>
         </div>
         <div id="chat-body" class="p-2">
-            <div id="chat-messages" class="win95-inset h-48 overflow-y-auto p-2 mb-2 bg-white text-xs flex flex-col gap-2 scroll-win95">
+            <div id="chat-messages" class="win95-inset h-64 md:h-72 overflow-y-auto p-2 mb-2 bg-white text-xs flex flex-col gap-2 scroll-win95">
                 <div class="bg-gray-100 p-2 border border-dashed border-gray-400">
                     สวัสดี! ฉันคือ AI Data Assistant ถามเกี่ยวกับร้านอาหารในระบบได้เลยครับ
                 </div>
@@ -303,8 +304,15 @@
 
     <script>
         const SHEET_ID = "1ehO4liCpgW_txiVCWd_zn1nUm2naRkKMLk_m6Qkn7zM";
-        // กลับมาใช้ Live API เพื่อให้ข้อมูลอัปเดตทันทีหลัง Scrape
-        const API_URL = `https://opensheet.elk.sh/${SHEET_ID}/1`; 
+        // opensheet.elk.sh ใช้ "sheet_name" (ชื่อแท็บ) ไม่ใช่ gid
+        // ถ้าดึงข้อมูลไม่ได้ ให้ตั้งชีตเป็น Anyone with the link (Viewer) และแก้ SHEET_NAME ให้ตรงกับชื่อแท็บจริง
+        const SHEET_NAME = "List";
+        const OPENSHEET_BASE = `https://opensheet.elk.sh/${SHEET_ID}`;
+        function apiUrlFor(sheetName) {
+            // IMPORTANT: opensheet rejects unknown query params. Keep URL clean (no ?t= cache-busting).
+            // We rely on fetch({ cache: 'no-store' }) instead.
+            return `${OPENSHEET_BASE}/${encodeURIComponent(sheetName)}`;
+        }
         // ใส่ URL Webhook จาก n8n ที่นี่
         const N8N_WEBHOOK_URL = "https://n8n-external.exservice.io/webhook/apify-googlemaps-receiver";
         
@@ -375,10 +383,9 @@
                 
                 // ตรวจสอบ Google Sheet เพื่อดูข้อมูลใหม่ (ใช้ Timestamp เพื่อแก้ปัญหา Cache ของ opensheet.elk.sh)
                 try {
-                    const response = await fetch(`${API_URL}?t=${Date.now()}`);
-                    if (response.ok) {
-                        const json = await response.json();
-                        const currentFetchedData = json.value || json;
+                    const result = await fetchSheetDataPreferred(SHEET_NAME);
+                    if (result && Array.isArray(result.data)) {
+                        const currentFetchedData = result.data;
                         const currentDataString = JSON.stringify(currentFetchedData);
                         
                         // ถ้าระดับข้อมูลไม่เท่าเดิม หรือมีอะไรใน JSON ต่างออกไป แปลว่าเริ่มมีข้อมูลใหม่แล้ว!
@@ -393,9 +400,8 @@
                             
                             // ดึงข้อมูลเวอร์ชันสมบูรณ์ที่สุด
                             try {
-                                const finalResp = await fetch(`${API_URL}?t=${Date.now()}`);
-                                const finalJson = await finalResp.json();
-                                rawData = finalJson.value || finalJson;
+                                const finalResult = await fetchSheetDataPreferred(SHEET_NAME);
+                                rawData = finalResult.data;
                             } catch (err) {
                                 rawData = currentFetchedData;
                             }
@@ -429,9 +435,8 @@
                     
                     // ทำการโหลดข้อมูลล่าสุดอีกครั้งเพื่อความแน่ใจ
                     try {
-                        const response = await fetch(`${API_URL}?t=${Date.now()}`);
-                        const json = await response.json();
-                        rawData = json.value || json;
+                        const result = await fetchSheetDataPreferred(SHEET_NAME);
+                        rawData = result.data;
                         processData();
                         applyAllFilters();
                         document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
@@ -512,16 +517,137 @@
             document.getElementById('win95-alert-overlay').style.display = 'none';
         }
 
+        async function fetchJsonWithDiagnostics(url) {
+            const res = await fetch(url, { cache: 'no-store' });
+            const contentType = (res.headers.get('content-type') || '').toLowerCase();
+            if (!res.ok) {
+                let bodyText = '';
+                try { bodyText = await res.text(); } catch (_) {}
+                throw new Error(`HTTP ${res.status} ${res.statusText}\nURL: ${url}\nContent-Type: ${contentType}\nBody (first 400 chars):\n${(bodyText || '').slice(0, 400)}`);
+            }
+            if (!contentType.includes('application/json') && !contentType.includes('text/json')) {
+                let bodyText = '';
+                try { bodyText = await res.text(); } catch (_) {}
+                // opensheet.elk.sh sometimes returns text/plain but with JSON-like body; attempt JSON parse anyway
+                try {
+                    return JSON.parse(bodyText);
+                } catch (e) {
+                    throw new Error(`Response is not JSON\nURL: ${url}\nContent-Type: ${contentType}\nBody (first 400 chars):\n${(bodyText || '').slice(0, 400)}`);
+                }
+            }
+            return await res.json();
+        }
+
+        async function fetchFromGviz(sheetName) {
+            // Fallback to Google's Visualization API output (works without opensheet).
+            // NOTE: This returns a JS wrapper, not pure JSON.
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+            const res = await fetch(url, { cache: 'no-store' });
+            if (!res.ok) {
+                const text = await res.text().catch(() => '');
+                throw new Error(`GVIZ HTTP ${res.status} ${res.statusText}\nURL: ${url}\nBody (first 400 chars):\n${(text || '').slice(0, 400)}`);
+            }
+            const text = await res.text();
+            // Typical format: google.visualization.Query.setResponse({...});
+            const start = text.indexOf('{');
+            const end = text.lastIndexOf('}');
+            if (start < 0 || end < 0 || end <= start) {
+                throw new Error(`GVIZ invalid payload\nURL: ${url}\nBody (first 400 chars):\n${text.slice(0, 400)}`);
+            }
+            const payload = JSON.parse(text.slice(start, end + 1));
+            const table = payload?.table;
+            if (!table?.rows || !table?.cols) return [];
+
+            // Convert to array of objects using header row (first row).
+            const headerRow = table.rows[0]?.c || [];
+            const headers = headerRow.map((cell, idx) => {
+                const v = cell?.v;
+                return (v === null || v === undefined || `${v}`.trim() === '') ? `col_${idx}` : `${v}`.trim();
+            });
+
+            const dataRows = table.rows.slice(1);
+            return dataRows.map(r => {
+                const obj = {};
+                const cells = r.c || [];
+                headers.forEach((h, i) => {
+                    const cell = cells[i];
+                    // cell.v is raw, cell.f is formatted; keep raw v when possible
+                    obj[h] = (cell && cell.v !== undefined) ? cell.v : '';
+                });
+                return obj;
+            });
+        }
+
+        async function fetchSheetDataPreferred(sheetName) {
+            // 1) Prefer opensheet (already used before)
+            // 2) Fallback to gviz if opensheet fails due to CORS/500/etc.
+            try {
+                const json = await fetchJsonWithDiagnostics(apiUrlFor(sheetName));
+                const data = json?.value || json;
+                if (Array.isArray(data)) return { source: 'opensheet', data };
+                if (data && typeof data === 'object' && data.error) {
+                    throw new Error(`opensheet returned error object: ${JSON.stringify(data).slice(0, 300)}`);
+                }
+                throw new Error(`opensheet returned non-array: ${Object.prototype.toString.call(data)}`);
+            } catch (e) {
+                console.warn("opensheet failed, trying gviz fallback...", e);
+                const data = await fetchFromGviz(sheetName);
+                return { source: 'gviz', data };
+            }
+        }
+
+        async function resolveWorkingSheet() {
+            // Try configured SHEET_NAME first, then common defaults.
+            const candidates = [
+                SHEET_NAME,
+                "List",
+                "Sheet1",
+                "ชีต1",
+                "Data",
+                "data",
+                "1"
+            ];
+            const tried = new Set();
+            for (const name of candidates) {
+                if (!name || tried.has(name)) continue;
+                tried.add(name);
+                try {
+                    const result = await fetchSheetDataPreferred(name);
+                    if (Array.isArray(result.data)) return { sheetName: name, data: result.data, source: result.source };
+                } catch (_) {
+                    // try next
+                }
+            }
+            // Fall back to configured name to produce a good diagnostic error
+            const result = await fetchSheetDataPreferred(SHEET_NAME);
+            return { sheetName: SHEET_NAME, data: result.data, source: result.source };
+        }
+
         async function initApp() {
             showLoading(true);
             try {
-                const response = await fetch(API_URL);
-                const json = await response.json();
-                rawData = json.value || json;
+                const resolved = await resolveWorkingSheet();
+                rawData = resolved.data;
                 processData();
                 applyAllFilters();
-                document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
-            } catch (e) { alert("Data fetch failed"); }
+                document.getElementById('update-time').innerText = new Date().toLocaleTimeString() + ` (${resolved.source})`;
+            } catch (e) {
+                console.error("Data fetch failed:", e);
+                showWin95Alert(
+                    "Data Fetch Failed",
+                    "ไม่สามารถดึงข้อมูลจาก Google Sheet ได้",
+                    `ระบบไม่สามารถโหลดข้อมูลจาก API ได้ในขณะนี้<br><br>
+                     <b>สิ่งที่ควรตรวจสอบ:</b><br>
+                     • Google Sheet ต้องแชร์เป็น <b>Anyone with the link</b> (Viewer)<br>
+                     • แท็บต้องชื่อ <b>List</b> (หรือแก้ค่า <b>SHEET_NAME</b>)<br>
+                     • ถ้า opensheet ใช้งานไม่ได้ ระบบจะ fallback ไปใช้ Google gviz อัตโนมัติ<br>
+                     • ถ้าโหลดได้แต่ไม่ขึ้นข้อมูล ให้เช็คว่าแถวแรกเป็นหัวตาราง (title, categoryName, totalScore, reviewsCount, ...)<br>
+                     • อินเทอร์เน็ต/ไฟร์วอลล์บล็อกโดเมน opensheet.elk.sh หรือไม่<br>`,
+                    true,
+                    (e && e.stack) ? e.stack : String(e),
+                    () => initApp()
+                );
+            }
             showLoading(false);
         }
 
@@ -548,14 +674,377 @@
             }
         }
 
-        function generateAIReasoning(item) {
+        // ---------------------------
+        // Decision Intelligence Engine (dataset-grounded)
+        // ---------------------------
+        function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+        function safeNum(n, fallback = 0) {
+            const v = Number(n);
+            return Number.isFinite(v) ? v : fallback;
+        }
+        function round(n, d = 0) {
+            const p = Math.pow(10, d);
+            return Math.round(n * p) / p;
+        }
+        function formatPct(n) { return `${clamp(Math.round(n), 0, 100)}%`; }
+
+        function computeConfidence(item) {
+            // Confidence is derived ONLY from dataset completeness & statistical support.
+            // Higher reviews => stronger statistical support; missing/estimated fields reduce confidence.
+            const reviews = safeNum(item.reviews, 0);
+            const rating = safeNum(item.rating, 0);
+            const hasArea = !!(item.area && item.area !== 'ไม่ระบุ');
+            const hasCategory = !!(item.category && item.category !== 'อื่นๆ');
+            const hasMap = !!(item.map && item.map !== '#');
+            const hasSource = !!(item.source && item.source !== '#');
+
+            // Reviews contribution (0..55)
+            const reviewsScore = clamp(Math.log10(reviews + 1) / Math.log10(5000 + 1), 0, 1) * 55;
+            // Rating presence & quality signal (0..20)
+            const ratingScore = rating > 0 ? clamp((rating - 3.5) / (5.0 - 3.5), 0, 1) * 20 : 0;
+            // Data completeness (0..25)
+            let completeness = 0;
+            completeness += hasArea ? 6 : 0;
+            completeness += hasCategory ? 6 : 0;
+            completeness += hasMap ? 6 : 0;
+            completeness += hasSource ? 4 : 0;
+            completeness += item.isEstimatedPrice ? 0 : 3;
+
+            const confidence = clamp(Math.round(reviewsScore + ratingScore + completeness), 0, 100);
             const reasons = [];
-            if (item.rating >= 4.7) reasons.push("เรตติ้งสูงสุดในย่าน");
-            if (item.reviews > 1000) reasons.push("ฐานรีวิวแน่นที่สุด");
-            if (item.price <= 300) reasons.push("คุ้มค่าราคาประหยัด");
-            if (item.isTrusted) reasons.push("มาตรฐานสูงไว้ใจได้");
-            if (item.category === 'ปิ้งย่าง' || item.category === 'ชาบู') reasons.push("เหมาะสังสรรค์กลุ่มใหญ่");
-            return reasons.length > 0 ? reasons.slice(0, 2).join(" & ") : "ตัวเลือกที่สมดุลที่สุด";
+            if (reviews >= 500) reasons.push(`รีวิวเยอะ (${reviews}) → ความเสถียรเชิงสถิติสูง`);
+            else if (reviews >= 150) reasons.push(`รีวิวระดับกลาง (${reviews}) → ความน่าเชื่อถือปานกลาง`);
+            else reasons.push(`รีวิวน้อย (${reviews}) → ความไม่แน่นอนสูง`);
+            if (item.isEstimatedPrice) reasons.push(`ราคาเป็นการประมาณการ → ความแม่นยำด้านงบลดลง`);
+            if (!hasArea) reasons.push(`ไม่มีย่านชัดเจน → ลดความแม่นในการ match พื้นที่`);
+            if (!hasCategory) reasons.push(`ประเภทไม่ชัดเจน → ลดความแม่นใน scenario ที่อิงประเภท`);
+            if (!hasMap) reasons.push(`ไม่มีลิงก์แผนที่ในข้อมูล → ตรวจสอบสถานที่จริงยากขึ้น`);
+            if (!hasSource) reasons.push(`ไม่มีเว็บไซต์/แหล่งข้อมูล → cross-check ยากขึ้น`);
+
+            return { confidence, reasons };
+        }
+
+        function computeScenarioScore(item, scenario) {
+            // Use only dataset fields: rating, reviews, price, category, isEstimatedPrice
+            const rating = safeNum(item.rating, 0);
+            const reviews = safeNum(item.reviews, 0);
+            const price = safeNum(item.price, 0);
+
+            const ratingNorm = clamp((rating - 3.0) / 2.0, 0, 1); // 3.0..5.0
+            const popNorm = clamp(Math.log10(reviews + 1) / Math.log10(3000 + 1), 0, 1);
+            const priceNorm = clamp((900 - price) / 900, 0, 1); // cheaper => higher
+
+            // Category rule is an inference from dataset label (NOT evidence of ops); treat as soft factor.
+            const cat = (item.category || '').toLowerCase();
+            const catHints = {
+                large: (cat.includes('ชาบู') || cat.includes('ปิ้งย่าง') || cat.includes('อาหารไทย')) ? 1 : 0,
+                work: (cat.includes('คาเฟ่') || cat.includes('อิตาเลียน')) ? 1 : 0,
+                fast: (cat.includes('ราเมง') || cat.includes('คาเฟ่') || cat.includes('อาหารตามสั่ง') || cat.includes('ก๋วยเตี๋ยว')) ? 1 : 0,
+                cheap: (cat.includes('อาหารไทย') || cat.includes('ก๋วยเตี๋ยว') || cat.includes('อาหารตามสั่ง') || cat.includes('คาเฟ่')) ? 1 : 0,
+                safe: 0
+            };
+
+            // Base weights per scenario (all derived from dataset dimensions)
+            let w = { q: 0.55, pop: 0.25, price: 0.20, cat: 0.00 };
+            if (scenario === 'safe') w = { q: 0.55, pop: 0.40, price: 0.05, cat: 0.00 };
+            if (scenario === 'cheap') w = { q: 0.35, pop: 0.20, price: 0.45, cat: 0.00 };
+            if (scenario === 'fast') w = { q: 0.45, pop: 0.25, price: 0.20, cat: 0.10 };
+            if (scenario === 'work') w = { q: 0.50, pop: 0.20, price: 0.20, cat: 0.10 };
+            if (scenario === 'large') w = { q: 0.45, pop: 0.25, price: 0.15, cat: 0.15 };
+
+            const catBonus = w.cat > 0 ? (catHints[scenario] || 0) : 0;
+
+            // Penalty for estimated price where scenario depends on budget clarity
+            const priceReliabilityPenalty = (item.isEstimatedPrice && (scenario === 'cheap' || scenario === 'default' || scenario === 'large')) ? 0.05 : 0;
+
+            const raw = (ratingNorm * w.q) + (popNorm * w.pop) + (priceNorm * w.price) + (catBonus * w.cat) - priceReliabilityPenalty;
+            const score = clamp(Math.round(raw * 100), 0, 100);
+
+            const parts = {
+                quality: round(ratingNorm * w.q * 100, 1),
+                popularity: round(popNorm * w.pop * 100, 1),
+                budget: round(priceNorm * w.price * 100, 1),
+                categoryFit: round(catBonus * w.cat * 100, 1),
+                penalties: round(priceReliabilityPenalty * 100, 1),
+            };
+
+            return { score, parts };
+        }
+
+        function computeBudgetEfficiency(item) {
+            // value per baht proxy using dataset-only fields
+            const price = Math.max(1, safeNum(item.price, 1));
+            const base = safeNum(item.base_score, 0);
+            // normalize to "score per 100฿"
+            return round((base / price) * 100, 2);
+        }
+
+        function computeOperationalRisk(item) {
+            // Operational risk is inferred from dataset support only (no hallucinated ops details).
+            // - high popularity => higher peak-hour crowd risk
+            // - low reviews => uncertainty risk
+            // - estimated price => budget uncertainty
+            const reviews = safeNum(item.reviews, 0);
+            const rating = safeNum(item.rating, 0);
+
+            let risk = 0;
+            // crowd risk proxy
+            if (reviews >= 1200) risk += 35;
+            else if (reviews >= 600) risk += 25;
+            else if (reviews >= 250) risk += 15;
+            else risk += 8;
+
+            // data uncertainty risk
+            if (reviews < 80) risk += 30;
+            else if (reviews < 150) risk += 18;
+            else if (reviews < 300) risk += 10;
+
+            if (item.isEstimatedPrice) risk += 12;
+            if (rating > 0 && rating < 4.0) risk += 10;
+
+            risk = clamp(Math.round(risk), 0, 100);
+            const level = risk >= 70 ? 'สูง' : risk >= 40 ? 'กลาง' : 'ต่ำ';
+            const peakHour = reviews >= 800 ? 'สูง' : reviews >= 300 ? 'กลาง' : 'ต่ำ';
+            return { risk, level, peakHour };
+        }
+
+        function scenarioLabel(s) {
+            const map = {
+                default: 'สมดุล',
+                safe: 'ปลอดภัย',
+                cheap: 'ประหยัด',
+                fast: 'รีบกิน',
+                work: 'คุยงาน',
+                large: 'ทีม 8–12 คน',
+            };
+            return map[s] || s;
+        }
+
+        function buildEvidenceList(item, scenario, scenarioScoreObj, confidenceObj, riskObj) {
+            const priceTag = item.isEstimatedPrice ? `<span class="badge bg-yellow-100 text-yellow-800 border-yellow-500">ราคา: ประมาณการ</span>` : `<span class="badge bg-green-100 text-green-800 border-green-500">ราคา: จากข้อมูล</span>`;
+            const confTag = confidenceObj.confidence >= 75
+                ? `<span class="badge bg-green-100 text-green-800 border-green-500">Confidence ${confidenceObj.confidence}%</span>`
+                : confidenceObj.confidence >= 50
+                    ? `<span class="badge bg-orange-100 text-orange-800 border-orange-500">Confidence ${confidenceObj.confidence}%</span>`
+                    : `<span class="badge bg-red-100 text-red-800 border-red-500">Confidence ${confidenceObj.confidence}%</span>`;
+
+            const riskTag = riskObj.level === 'ต่ำ'
+                ? `<span class="badge bg-green-100 text-green-800 border-green-500">Risk ${riskObj.level}</span>`
+                : riskObj.level === 'กลาง'
+                    ? `<span class="badge bg-orange-100 text-orange-800 border-orange-500">Risk ${riskObj.level}</span>`
+                    : `<span class="badge bg-red-100 text-red-800 border-red-500">Risk ${riskObj.level}</span>`;
+
+            return `
+                <div class="flex flex-wrap gap-1.5 items-center mb-2">
+                    <span class="badge bg-blue-100 text-blue-800 border-blue-500">Scenario: ${scenarioLabel(scenario)}</span>
+                    <span class="badge bg-amber-100 text-amber-900 border-amber-700">Scenario Score ${scenarioScoreObj.score}%</span>
+                    ${confTag}
+                    ${riskTag}
+                    <span class="badge bg-gray-100 text-gray-800 border-gray-500">Peak-hour risk: ${riskObj.peakHour}</span>
+                    ${priceTag}
+                </div>
+                <div class="text-[10px] leading-tight">
+                    <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+                        <div><b>Rating:</b> ${item.rating} ⭐</div>
+                        <div><b>Reviews:</b> ${item.reviews}</div>
+                        <div><b>Price/คน:</b> ${item.display_price}</div>
+                        <div><b>Category:</b> ${item.category}</div>
+                        <div class="col-span-2"><b>Area:</b> ${item.area}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildTop3WhyHtml(item, idx, top3List, scenario, basePool) {
+            const sc = computeScenarioScore(item, scenario);
+            const conf = computeConfidence(item);
+            const risk = computeOperationalRisk(item);
+            const valuePerBaht = computeBudgetEfficiency(item);
+
+            const comp = (other) => computeScenarioScore(other, scenario).score;
+            const rank = idx + 1;
+            const above = idx > 0 ? top3List[idx - 1] : null;
+            const below = idx < top3List.length - 1 ? top3List[idx + 1] : null;
+
+            const aboveDelta = above ? (sc.score - comp(above)) : null;
+            const belowDelta = below ? (sc.score - comp(below)) : null;
+
+            // Dataset-only "strength" comparisons against pool (percentiles)
+            const poolScores = basePool.map(x => computeScenarioScore(x, scenario).score).sort((a, b) => a - b);
+            const pctRank = (() => {
+                if (poolScores.length === 0) return 0;
+                let lo = 0, hi = poolScores.length - 1;
+                while (lo <= hi) {
+                    const mid = Math.floor((lo + hi) / 2);
+                    if (poolScores[mid] <= sc.score) lo = mid + 1;
+                    else hi = mid - 1;
+                }
+                return Math.round((hi / Math.max(1, poolScores.length - 1)) * 100);
+            })();
+
+            const scoreParts = sc.parts;
+
+            // Trade-off analysis is explicitly grounded in dataset dimensions
+            const tradeoffs = [];
+            if (item.isEstimatedPrice) tradeoffs.push(`งบประมาณมีความไม่แน่นอน (ราคาเป็นการประมาณการ)`);
+            if (item.price >= 700) tradeoffs.push(`งบ/คนสูงเมื่อเทียบกับตัวเลือกอื่นในรายการ`);
+            if (item.reviews < 150) tradeoffs.push(`ฐานรีวิวไม่มาก → ความเสี่ยงด้านความเสถียรของคะแนน`);
+            if (risk.peakHour === 'สูง') tradeoffs.push(`ความเสี่ยงช่วงพีคสูง (ความนิยมจากจำนวนรีวิว)`);
+            if (tradeoffs.length === 0) tradeoffs.push(`ไม่มี trade-off เด่นจากมุมข้อมูล (rating/review/price ครบและสมดุล)`);
+
+            const bestFor = [];
+            if (scenario === 'cheap') bestFor.push(`คนที่ต้องการ “คุ้มต่อบาท” (value-per-baht ${valuePerBaht})`);
+            if (scenario === 'safe') bestFor.push(`คนที่ต้องการความ “ชัวร์” จากฐานรีวิว/ความน่าเชื่อถือของข้อมูล`);
+            if (scenario === 'fast') bestFor.push(`คนที่ยอมรับการตัดสินใจจาก rating+popularity เป็นหลัก (ข้อมูลการเสิร์ฟเร็วไม่มีในชุดข้อมูล)`);
+            if (scenario === 'work') bestFor.push(`คนที่ยอมรับ “category-fit” เป็นสัญญาณเสริม (ไม่มีข้อมูลเสียง/Wi‑Fi/ที่นั่งใน dataset)`);
+            if (scenario === 'large') bestFor.push(`ทีมที่ใช้ “ประเภทอาหาร” เป็นสัญญาณการแชร์/กลุ่ม (ไม่มีข้อมูลจำนวนโต๊ะ/การจองใน dataset)`);
+            if (scenario === 'default') bestFor.push(`คนที่อยากได้ตัวเลือกสมดุล: คุณภาพ + ความนิยม + งบ`);
+
+            const notFor = [];
+            if (item.isEstimatedPrice) notFor.push(`คนที่ต้องการงบ “แน่นอน”`);
+            if (risk.peakHour === 'สูง') notFor.push(`คนที่เลี่ยงความหนาแน่นช่วงพีค (ชุดข้อมูลไม่มีเวลา/queue จริง)`);
+            if (item.rating < 4.2) notFor.push(`คนที่ต้องการเรตติ้งสูงมากเป็นเงื่อนไขหลัก`);
+            if (notFor.length === 0) notFor.push(`ไม่มีข้อจำกัดชัดเจนจาก dataset (ขึ้นกับ preference ส่วนบุคคล)`);
+
+            // Comparative "why higher than competitors" (dataset-only)
+            const compLines = [];
+            if (above) {
+                compLines.push(`เทียบ #${rank - 1}: ต่ำกว่า <b>${above.name}</b> ${Math.abs(aboveDelta)} แต้มใน scenario score → เหมาะเป็นตัวเลือกสำรองหากต้องการ trade-off ต่างกัน`);
+            } else if (below) {
+                compLines.push(`เหนือ #2: มากกว่า <b>${below.name}</b> ${belowDelta} แต้มใน scenario score (จากองค์ประกอบคะแนนด้านล่าง)`);
+            }
+
+            // Unique strengths (dataset-derived)
+            const strengths = [];
+            if (item.rating >= 4.7) strengths.push(`คุณภาพโดดเด่น (rating ${item.rating})`);
+            if (item.reviews >= 800) strengths.push(`ฐานข้อมูลแข็งแรง (reviews ${item.reviews})`);
+            if (!item.isEstimatedPrice && item.price > 0) strengths.push(`งบชัดเจนจากข้อมูล (ไม่ใช่การประมาณการ)`);
+            if (valuePerBaht >= 20) strengths.push(`คุ้มค่าเชิงข้อมูล (value-per-baht ${valuePerBaht})`);
+            if (strengths.length === 0) strengths.push(`สมดุลโดยรวมจากมิติ rating/reviews/price`);
+
+            const scoreBreakdown = `
+                <div class="mt-2 win95-inset p-2 bg-white">
+                    <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">Scenario scoring breakdown (dataset-only)</div>
+                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                        <div class="win95-inset p-1 bg-blue-50">
+                            <div class="text-[9px] text-gray-500 uppercase">Quality (rating)</div>
+                            <div class="font-black text-blue-800">${formatPct(scoreParts.quality)}</div>
+                        </div>
+                        <div class="win95-inset p-1 bg-purple-50">
+                            <div class="text-[9px] text-gray-500 uppercase">Reliability (reviews)</div>
+                            <div class="font-black text-purple-800">${formatPct(scoreParts.popularity)}</div>
+                        </div>
+                        <div class="win95-inset p-1 bg-green-50">
+                            <div class="text-[9px] text-gray-500 uppercase">Budget fit (price)</div>
+                            <div class="font-black text-green-800">${formatPct(scoreParts.budget)}</div>
+                        </div>
+                        <div class="win95-inset p-1 bg-amber-50">
+                            <div class="text-[9px] text-gray-500 uppercase">Category fit (soft)</div>
+                            <div class="font-black text-amber-800">${formatPct(scoreParts.categoryFit)}</div>
+                        </div>
+                    </div>
+                    ${scoreParts.penalties > 0 ? `<div class="mt-2 text-[10px] text-red-700"><b>Penalty:</b> -${formatPct(scoreParts.penalties)} (ราคาประมาณการ/ความแน่นอนด้านงบ)</div>` : ``}
+                    <div class="mt-2 text-[10px] text-gray-600">Percentile rank vs filtered pool: <b>${pctRank}th</b></div>
+                </div>
+            `;
+
+            const confHtml = `
+                <div class="mt-2 win95-inset p-2 bg-white">
+                    <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">AI confidence reasoning (dataset support)</div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex-1 win95-inset h-3 bg-gray-100 overflow-hidden">
+                            <div class="h-full ${conf.confidence >= 75 ? 'bg-green-700' : conf.confidence >= 50 ? 'bg-orange-600' : 'bg-red-700'}" style="width:${conf.confidence}%"></div>
+                        </div>
+                        <div class="text-[10px] font-black">${conf.confidence}%</div>
+                    </div>
+                    <ul class="list-disc pl-4 text-[10px] text-gray-700">
+                        ${conf.reasons.slice(0, 5).map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            const riskHtml = `
+                <div class="mt-2 win95-inset p-2 bg-white">
+                    <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">Operational risk (proxy from dataset)</div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex-1 win95-inset h-3 bg-gray-100 overflow-hidden">
+                            <div class="h-full ${risk.level === 'ต่ำ' ? 'bg-green-700' : risk.level === 'กลาง' ? 'bg-orange-600' : 'bg-red-700'}" style="width:${risk.risk}%"></div>
+                        </div>
+                        <div class="text-[10px] font-black">${risk.level} (${risk.risk})</div>
+                    </div>
+                    <div class="text-[10px] text-gray-700">
+                        <b>Peak-hour risk:</b> ${risk.peakHour} (อิงจำนวนรีวิวเป็น proxy ความนิยม)<br>
+                        <b>Data uncertainty:</b> ${item.reviews < 150 ? 'สูง' : item.reviews < 300 ? 'กลาง' : 'ต่ำ'} (อิงจำนวนรีวิว)<br>
+                        <b>Budget uncertainty:</b> ${item.isEstimatedPrice ? 'สูง (ราคาเป็นการประมาณการ)' : 'ต่ำ'}
+                    </div>
+                </div>
+            `;
+
+            const recommendationStrength = `
+                <div class="mt-2 win95-inset p-2 bg-white">
+                    <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">Recommendation strength meter</div>
+                    <div class="text-[9px] text-gray-600 mb-1">Scenario score × Confidence (dataset-only)</div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 win95-inset h-3 bg-gray-100 overflow-hidden">
+                            <div class="h-full bg-blue-800" style="width:${Math.round((sc.score * conf.confidence) / 100)}%"></div>
+                        </div>
+                        <div class="text-[10px] font-black">${Math.round((sc.score * conf.confidence) / 100)}%</div>
+                    </div>
+                </div>
+            `;
+
+            return `
+                <div class="mt-2">
+                    ${buildEvidenceList(item, scenario, sc, conf, risk)}
+                    <details class="win95-inset p-2 bg-white">
+                        <summary class="cursor-pointer text-[10px] font-black text-blue-900">WHY THIS IS #${rank} (deep reasoning)</summary>
+                        <div class="mt-2 text-[10px] leading-tight text-gray-800">
+                            <div class="win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">1) Why ranked higher than competitors</div>
+                                <div>${compLines.join('<br>') || `ติด Top 3 เพราะ scenario score สูงกว่าในกลุ่มผลลัพธ์ที่กรองแล้ว (percentile ${pctRank}th)`}</div>
+                                <div class="mt-2"><b>10) Better than #2/#3 because:</b> ${below ? `เหนือ <b>${below.name}</b> ใน scenario score (+${belowDelta}) และ/หรือความน่าเชื่อถือของข้อมูล (reviews/ราคา)` : `เป็นอันดับ #${rank} จึงมี trade-off แตกต่างจากอันดับอื่น`}</div>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">2) Dataset evidence</div>
+                                <div>Rating <b>${item.rating}</b> ⭐, Reviews <b>${item.reviews}</b>, Price/คน <b>${item.display_price}</b>, Category <b>${item.category}</b>, Area <b>${item.area}</b></div>
+                                <div class="mt-1 text-[9px] text-gray-600">หมายเหตุ: ข้อมูล “ที่นั่ง/เสียง/Wi‑Fi/เวลาเปิด/เวลารอ” ไม่มีใน dataset → ไม่ถูกนำมาใช้เป็นหลักฐาน</div>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">3) Trade-offs</div>
+                                <ul class="list-disc pl-4">${tradeoffs.map(t => `<li>${t}</li>`).join('')}</ul>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">4) Best suited for</div>
+                                <ul class="list-disc pl-4">${bestFor.map(x => `<li>${x}</li>`).join('')}</ul>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">5) Why it fits this scenario</div>
+                                <div>Scenario “<b>${scenarioLabel(scenario)}</b>” ใช้การถ่วงน้ำหนักจาก <b>rating/reviews/price</b> เป็นหลัก และเสริมด้วย <b>category-fit</b> แบบ soft (ถ้ามี)</div>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">6) Why it may NOT fit some users</div>
+                                <ul class="list-disc pl-4">${notFor.map(x => `<li>${x}</li>`).join('')}</ul>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">7) Confidence</div>
+                                <div>ความมั่นใจขึ้นกับ “ความครบถ้วนข้อมูล + ความแข็งแรงเชิงสถิติ (reviews)” ไม่ใช่การคาดเดาด้านบรรยากาศ</div>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">8) Unique strengths</div>
+                                <ul class="list-disc pl-4">${strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-gray-50">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">9) Operational risks</div>
+                                <div>ความเสี่ยงที่รายงานเป็น <b>proxy จาก dataset</b> (reviews/ราคาเป็นประมาณการ) ไม่ใช่ข้อมูลหน้างานครับ</div>
+                            </div>
+                            ${scoreBreakdown}
+                            ${confHtml}
+                            ${riskHtml}
+                            ${recommendationStrength}
+                        </div>
+                    </details>
+                </div>
+            `;
         }
 
         function processData() {
@@ -661,7 +1150,12 @@
                     source: item['website'] || '#',
                     isTrusted: rating >= 4.4 && reviews > 300
                 };
-                processedItem.pros = generateAIReasoning(processedItem);
+                // keep as a short label; deep reasoning is rendered in Top 3 cards
+                processedItem.pros = processedItem.isTrusted
+                    ? "ข้อมูลน่าเชื่อถือสูง (rating+reviews)"
+                    : processedItem.isEstimatedPrice
+                        ? "ข้อมูลราคาไม่ครบ (มีการประมาณการ)"
+                        : "สมดุลจากข้อมูล rating/reviews/price";
                 return processedItem;
             });
             populateCategoryDropdown();
@@ -707,21 +1201,8 @@
             filteredData = [...baseFiltered].sort((a,b) => b.rating - a.rating);
 
             top3Data = baseFiltered.map(item => {
-                let s = item.base_score;
-                if (scenario === 'safe') s = (item.rating * 15) + Math.min(25, item.reviews / 20);
-                else if (scenario === 'cheap') s = (1000 - item.price) / 10 + (item.rating * 5);
-                else if (scenario === 'fast') {
-                    s = (item.rating * 10);
-                    if (['ราเมง', 'อาหารญี่ปุ่น'].includes(item.category)) s += 30;
-                }
-                else if (scenario === 'work') {
-                    s = (item.rating * 15);
-                    if (item.category === 'คาเฟ่') s += 25;
-                }
-                else if (scenario === 'large') {
-                    if (['ปิ้งย่าง', 'ชาบู', 'อาหารไทย'].includes(item.category)) s += 40;
-                }
-                return { ...item, scenario_score: Math.min(100, Math.round(s)) };
+                const sc = computeScenarioScore(item, scenario);
+                return { ...item, scenario_score: sc.score, scenario_parts: sc.parts };
             }).sort((a,b) => b.scenario_score - a.scenario_score);
 
             updateUI();
@@ -780,9 +1261,12 @@
                        <a href="${searchUrl}" target="_blank" title="ค้นหาเมนูและราคาจริงใน Google" class="text-blue-500 hover:text-blue-700 text-[9px] font-normal inline-block ml-0.5">🔍</a>`
                     : `<span>${item.display_price}</span>`;
 
+                const conf = computeConfidence(item);
+                const risk = computeOperationalRisk(item);
+
                 return `
-                    <div class="win95-window flex flex-col ${idx === 0 ? 'premium-rank-1 border-pink-500 border-4' : ''}">
-                        <div class="win95-title-bar ${idx === 0 ? 'bg-pink-600' : 'bg-gray-700'}">
+                    <div class="win95-window flex flex-col ${idx === 0 ? 'premium-rank-1 border-amber-700 border-4' : ''}">
+                        <div class="win95-title-bar ${idx === 0 ? 'bg-amber-800' : 'bg-gray-700'}">
                             <span>#${idx+1} RECOMMENDED</span>
                             <span class="text-[10px] bg-white text-black px-1">${item.scenario_score}% SCORE</span>
                         </div>
@@ -800,15 +1284,26 @@
                                     <div class="text-[7px] uppercase text-gray-500">Price</div>
                                     <div class="text-[10px] font-black text-green-800 flex items-center justify-center">${priceHtml}</div>
                                 </div>
-                                <div class="win95-inset bg-pink-50 p-1 text-center">
+                                <div class="win95-inset bg-amber-50 p-1 text-center">
                                     <div class="text-[7px] uppercase text-gray-500">Score</div>
-                                    <div class="text-[10px] font-black text-pink-600">${item.scenario_score}%</div>
+                                    <div class="text-[10px] font-black text-amber-800">${item.scenario_score}%</div>
                                 </div>
                             </div>
                             <div class="text-[10px] font-bold text-blue-900 mb-2">📍 ${item.area}</div>
-                            <div class="text-[9px] border-t border-dashed border-gray-400 pt-2 mb-2 text-gray-700">
-                                <b>AI WHY:</b> ${item.pros}
+                            <div class="flex flex-wrap gap-1.5 mb-2">
+                                <span class="badge bg-gray-100 text-gray-800 border-gray-500">${item.category}</span>
+                                <span class="badge ${conf.confidence >= 75 ? 'bg-green-100 text-green-800 border-green-500' : conf.confidence >= 50 ? 'bg-orange-100 text-orange-800 border-orange-500' : 'bg-red-100 text-red-800 border-red-500'}">
+                                    Confidence ${conf.confidence}%
+                                </span>
+                                <span class="badge ${risk.level === 'ต่ำ' ? 'bg-green-100 text-green-800 border-green-500' : risk.level === 'กลาง' ? 'bg-orange-100 text-orange-800 border-orange-500' : 'bg-red-100 text-red-800 border-red-500'}">
+                                    Risk ${risk.level}
+                                </span>
+                                <span class="badge bg-blue-100 text-blue-800 border-blue-500">Peak ${risk.peakHour}</span>
                             </div>
+                            <div class="text-[9px] border-t border-dashed border-gray-400 pt-2 mb-2 text-gray-700 leading-tight">
+                                <b>WHY (dataset-only):</b> คะแนน scenario สูงเพราะผสม <b>rating</b> + <b>reviews</b> + <b>price</b> ตามน้ำหนักของสถานการณ์ (และใช้ category-fit เป็นสัญญาณเสริมแบบ soft)
+                            </div>
+                            ${buildTop3WhyHtml(item, idx, top, document.querySelector('input[name="scenario"]:checked').value, filteredData)}
                             <div class="flex gap-1 mt-auto">
                                 <a href="${item.map}" target="_blank" class="win95-button text-[9px] flex-1 text-center font-bold">MAP</a>
                                 <a href="${item.source}" target="_blank" class="win95-button text-[9px] flex-1 text-center">WEB</a>
@@ -841,11 +1336,263 @@
         }
 
         function renderAIInsights() {
-            const top = top3Data[0];
-            const safe = [...filteredData].sort((a,b)=>b.reviews - a.reviews)[0];
+            const scenario = document.querySelector('input[name="scenario"]:checked').value;
+            const n = filteredData.length;
+            if (n === 0) {
+                document.getElementById('ai-insights').innerHTML = `<div class="text-xs text-gray-600">ไม่มีข้อมูลในผลลัพธ์ที่กรองอยู่ตอนนี้</div>`;
+                return;
+            }
+
+            const prices = filteredData.map(x => safeNum(x.price, 0)).filter(x => x > 0).sort((a, b) => a - b);
+            const avgPrice = round(prices.reduce((a, b) => a + b, 0) / Math.max(1, prices.length), 0);
+            const q = (p) => prices.length ? prices[Math.floor((prices.length - 1) * p)] : 0;
+            const p25 = q(0.25), p50 = q(0.50), p75 = q(0.75);
+
+            const avgRating = round(filteredData.reduce((a, b) => a + safeNum(b.rating, 0), 0) / n, 2);
+            const avgReviews = round(filteredData.reduce((a, b) => a + safeNum(b.reviews, 0), 0) / n, 0);
+
+            // Category distribution
+            const catCounts = {};
+            filteredData.forEach(x => { catCounts[x.category] = (catCounts[x.category] || 0) + 1; });
+            const topCats = Object.entries(catCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            // Area comparison (use the same mapping logic as filters; dataset may contain synonyms like ปทุมวัน/สุขุมวิท 55/etc.)
+            const targetAreas = ['สยาม', 'อารีย์', 'ทองหล่อ', 'อโศก', 'พร้อมพงษ์'];
+            const areaMap = {
+                'สยาม': ['ปทุมวัน', 'Siam', 'Pathum Wan', 'สยาม'],
+                'อารีย์': ['พญาไท', 'Ari', 'Phaya Thai', 'สามเสน', 'อารีย์'],
+                'ทองหล่อ': ['ทองหล่อ', 'Thong Lo', 'Thonglor', 'สุขุมวิท 55'],
+                'อโศก': ['อโศก', 'Asoke', 'คลองเตยเหนือ', 'Terminal 21', 'สุขุมวิท 21'],
+                'พร้อมพงษ์': ['พร้อมพงษ์', 'Phrom Phong', 'สุขุมวิท 39', 'EmQuartier']
+            };
+            const areaBuckets = Object.fromEntries(targetAreas.map(a => [a, []]));
+            filteredData.forEach(it => {
+                const content = `${it.area || ''} ${it.address || ''} ${it.name || ''}`.toLowerCase();
+                for (const a of targetAreas) {
+                    const keys = areaMap[a] || [a];
+                    if (keys.some(k => content.includes(k.toLowerCase()))) { areaBuckets[a].push(it); break; }
+                }
+            });
+            const areaStats = targetAreas.map(a => {
+                const arr = areaBuckets[a];
+                const ap = arr.map(x => safeNum(x.price, 0)).filter(x => x > 0);
+                const ar = arr.length ? round(arr.reduce((s, x) => s + safeNum(x.rating, 0), 0) / arr.length, 2) : 0;
+                const avp = ap.length ? round(ap.reduce((s, x) => s + x, 0) / ap.length, 0) : 0;
+                return { area: a, count: arr.length, avgRating: ar, avgPrice: avp };
+            }).sort((a, b) => b.count - a.count);
+
+            // Best overall (balanced) and safest (reliability)
+            const balanced = [...filteredData].sort((a, b) => computeScenarioScore(b, 'default').score - computeScenarioScore(a, 'default').score).slice(0, 5);
+            const safest = [...filteredData].sort((a, b) => safeNum(b.reviews, 0) - safeNum(a.reviews, 0)).slice(0, 5);
+
+            // Hidden gems: high rating but low reviews (explicitly low confidence)
+            const hiddenGems = [...filteredData]
+                .filter(x => safeNum(x.rating, 0) >= 4.6 && safeNum(x.reviews, 0) > 0 && safeNum(x.reviews, 0) < 180)
+                .sort((a, b) => safeNum(b.rating, 0) - safeNum(a.rating, 0))
+                .slice(0, 5);
+
+            // Risky: low reviews or estimated price + high price
+            const risky = [...filteredData]
+                .filter(x => safeNum(x.reviews, 0) < 120 || x.isEstimatedPrice || safeNum(x.price, 0) >= p75)
+                .sort((a, b) => computeOperationalRisk(b).risk - computeOperationalRisk(a).risk)
+                .slice(0, 6);
+
+            // Budget intelligence
+            const valueSorted = [...filteredData].sort((a, b) => computeBudgetEfficiency(b) - computeBudgetEfficiency(a));
+            const bestValue = valueSorted.slice(0, 5);
+            const overpriced = [...filteredData]
+                .filter(x => safeNum(x.price, 0) >= p75)
+                .sort((a, b) => (safeNum(b.price, 0) - safeNum(b.base_score, 0)) - (safeNum(a.price, 0) - safeNum(a.base_score, 0)))
+                .slice(0, 5);
+
+            // Group dining intelligence (dataset-only proxy via category + reliability)
+            const groupPool = [...filteredData]
+                .map(x => ({ x, s: computeScenarioScore(x, 'large').score }))
+                .sort((a, b) => b.s - a.s)
+                .slice(0, 6)
+                .map(o => o.x);
+
+            // Smart summary picks (dataset-only)
+            const safestOverall = safest[0];
+            const bestValuePick = bestValue[0];
+            const premiumPick = [...filteredData].sort((a, b) => safeNum(b.price, 0) - safeNum(a.price, 0))[0];
+            const bestLargePick = groupPool[0];
+            const bestForWorkPick = [...filteredData].sort((a, b) => computeScenarioScore(b, 'work').score - computeScenarioScore(a, 'work').score)[0];
+
+            const miniRow = (it, extra = '') => {
+                const conf = computeConfidence(it);
+                const risk = computeOperationalRisk(it);
+                return `
+                    <div class="win95-inset p-2 bg-white">
+                        <div class="flex justify-between gap-2">
+                            <div class="font-black text-[11px] text-blue-900 truncate">${it.name}</div>
+                            <div class="text-[10px] font-black text-amber-800">${it.base_score}%</div>
+                        </div>
+                        <div class="text-[10px] text-gray-700 mt-1">
+                            <b>${it.area}</b> • ${it.category} • ${it.display_price} • ${it.rating}⭐ (${it.reviews})
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            <span class="badge bg-blue-100 text-blue-800 border-blue-500">${scenarioLabel(scenario)}</span>
+                            <span class="badge bg-amber-100 text-amber-900 border-amber-700">Scenario ${computeScenarioScore(it, scenario).score}%</span>
+                            <span class="badge ${conf.confidence >= 75 ? 'bg-green-100 text-green-800 border-green-500' : conf.confidence >= 50 ? 'bg-orange-100 text-orange-800 border-orange-500' : 'bg-red-100 text-red-800 border-red-500'}">Conf ${conf.confidence}%</span>
+                            <span class="badge ${risk.level === 'ต่ำ' ? 'bg-green-100 text-green-800 border-green-500' : risk.level === 'กลาง' ? 'bg-orange-100 text-orange-800 border-orange-500' : 'bg-red-100 text-red-800 border-red-500'}">Risk ${risk.level}</span>
+                            ${it.isEstimatedPrice ? `<span class="badge bg-yellow-100 text-yellow-800 border-yellow-500">Estimated price</span>` : ``}
+                        </div>
+                        ${extra ? `<div class="text-[9px] text-gray-600 mt-1">${extra}</div>` : ``}
+                    </div>
+                `;
+            };
+
             document.getElementById('ai-insights').innerHTML = `
-                <p>💡 <b>AI Reasoning:</b> จากการวิเคราะห์ร้านอาหารทั้งหมด <b>${filteredData.length} ร้าน</b> เราพบว่า <b>${top?.name || '-'}</b> เป็นตัวเลือกที่โดดเด่นที่สุดตามสถานการณ์ที่คุณเลือก</p>
-                <p class="mt-2">🛡️ <b>Safety First:</b> ร้านที่มีความเสถียรสูงสุดคือ <b>${safe?.name || '-'}</b> ด้วยรีวิวสะสม <b>${safe?.reviews || 0} รายการ</b></p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="win95-window p-2">
+                        <div class="win95-title-bar bg-blue-800"><span>1) Overall Market Insight (dataset-only)</span></div>
+                        <div class="p-2 text-[11px] text-gray-800 leading-snug">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="win95-inset p-2 bg-white">
+                                    <div class="text-[10px] uppercase font-bold text-gray-600">Results</div>
+                                    <div class="text-xl font-black text-blue-800">${n}</div>
+                                </div>
+                                <div class="win95-inset p-2 bg-white">
+                                    <div class="text-[10px] uppercase font-bold text-gray-600">Scenario</div>
+                                    <div class="text-[12px] font-black text-amber-800">${scenarioLabel(scenario)}</div>
+                                </div>
+                                <div class="win95-inset p-2 bg-white">
+                                    <div class="text-[10px] uppercase font-bold text-gray-600">Avg rating</div>
+                                    <div class="text-[14px] font-black text-blue-900">${avgRating}</div>
+                                </div>
+                                <div class="win95-inset p-2 bg-white">
+                                    <div class="text-[10px] uppercase font-bold text-gray-600">Avg reviews</div>
+                                    <div class="text-[14px] font-black text-purple-800">${avgReviews}</div>
+                                </div>
+                                <div class="win95-inset p-2 bg-white col-span-2">
+                                    <div class="text-[10px] uppercase font-bold text-gray-600">Pricing trend (from dataset)</div>
+                                    <div class="text-[11px] text-gray-800">Avg ${avgPrice}฿ • P25 ${p25}฿ • Median ${p50}฿ • P75 ${p75}฿</div>
+                                </div>
+                            </div>
+                            <div class="mt-2 win95-inset p-2 bg-white">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-1">Dominant categories</div>
+                                <div class="flex flex-wrap gap-1">
+                                    ${topCats.map(([c, k]) => `<span class="badge bg-gray-100 text-gray-800 border-gray-500">${c} (${k})</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="win95-window p-2">
+                        <div class="win95-title-bar bg-green-800"><span>2) Best Overall Choices (balanced & safe)</span></div>
+                        <div class="p-2 grid grid-cols-1 gap-2">
+                            ${balanced.slice(0, 3).map(it => miniRow(it, `Balanced score (default): ${computeScenarioScore(it, 'default').score}% • Dataset support: reviews ${it.reviews}`)).join('')}
+                            <details class="win95-inset p-2 bg-white">
+                                <summary class="cursor-pointer text-[10px] font-black text-green-900">ดู Top balanced + safest เพิ่มเติม</summary>
+                                <div class="mt-2 grid grid-cols-1 gap-2">
+                                    <div class="text-[10px] uppercase font-bold text-gray-600">Balanced (Top 5)</div>
+                                    ${balanced.map(it => miniRow(it)).join('')}
+                                    <div class="text-[10px] uppercase font-bold text-gray-600 mt-2">Safest (reviews as reliability)</div>
+                                    ${safest.map(it => miniRow(it, `Reliability proxy: reviews ${it.reviews}`)).join('')}
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <div class="win95-window p-2">
+                        <div class="win95-title-bar bg-amber-800"><span>3) Hidden Gems (high rating, low reviews = lower confidence)</span></div>
+                        <div class="p-2 grid grid-cols-1 gap-2">
+                            ${hiddenGems.length
+                                ? hiddenGems.map(it => miniRow(it, `Hidden gem condition: rating ≥ 4.6 AND reviews < 180 → ความมั่นใจลดลง`)).join('')
+                                : `<div class="win95-inset p-2 bg-white text-[10px] text-gray-700">ไม่พบ Hidden Gem ตามเกณฑ์ในผลลัพธ์ปัจจุบัน</div>`
+                            }
+                        </div>
+                    </div>
+
+                    <div class="win95-window p-2">
+                        <div class="win95-title-bar bg-red-700"><span>4) Risky Recommendations (data uncertainty / peak risk)</span></div>
+                        <div class="p-2 grid grid-cols-1 gap-2">
+                            ${risky.map(it => miniRow(it, `Risk proxy: ${computeOperationalRisk(it).level} • Peak-hour: ${computeOperationalRisk(it).peakHour} • Reasons: reviews/estimated price/upper-quartile price`)).join('')}
+                        </div>
+                    </div>
+
+                    <div class="win95-window p-2 md:col-span-2">
+                        <div class="win95-title-bar bg-gray-700"><span>5) Budget Intelligence</span></div>
+                        <div class="p-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="win95-inset p-2 bg-white">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-2">Best value-per-baht (proxy)</div>
+                                <div class="grid grid-cols-1 gap-2">
+                                    ${bestValue.map(it => miniRow(it, `Value-per-baht: ${computeBudgetEfficiency(it)} (base_score ต่อ 100฿)`)).join('')}
+                                </div>
+                            </div>
+                            <div class="win95-inset p-2 bg-white">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-2">Potentially overpriced (upper quartile price)</div>
+                                <div class="grid grid-cols-1 gap-2">
+                                    ${overpriced.map(it => miniRow(it, `Upper-quartile price (≥ P75 ${p75}฿). ตรวจ trade-off: ราคา vs base_score`)).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="win95-window p-2 md:col-span-2">
+                        <div class="win95-title-bar bg-blue-800"><span>6) Group Dining Intelligence (8–12) — dataset-only proxy</span></div>
+                        <div class="p-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="win95-inset p-2 bg-white">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-2">Top picks for “ทีม 8–12 คน” (proxy)</div>
+                                <div class="grid grid-cols-1 gap-2">
+                                    ${groupPool.map(it => miniRow(it, `Large-team score: ${computeScenarioScore(it, 'large').score}%. ใช้ rating+reviews+price + category-fit แบบ soft (ไม่มีข้อมูลโต๊ะ/การจอง)`)).join('')}
+                                </div>
+                            </div>
+                            <div class="win95-inset p-2 bg-white">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-2">Trade-off patterns (honest)</div>
+                                <ul class="list-disc pl-4 text-[10px] text-gray-700 leading-snug">
+                                    <li><b>Cheaper</b> มักชนะใน “ประหยัด” แต่ถ้าราคาเป็นประมาณการ → ความเสี่ยงงบ</li>
+                                    <li><b>Reviews สูง</b> เพิ่มความมั่นใจ แต่เพิ่ม “peak-hour risk” (proxy ความนิยม)</li>
+                                    <li><b>Rating สูงแต่ reviews ต่ำ</b> เป็น Hidden Gem ได้ แต่ confidence ต่ำกว่า</li>
+                                    <li><b>Premium (ราคา P75+)</b> ต้องดูว่า base_score และ rating สมเหตุสมผลหรือไม่</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="win95-window p-2 md:col-span-2">
+                        <div class="win95-title-bar bg-purple-800"><span>7) Confidence Analysis (dataset support)</span></div>
+                        <div class="p-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="win95-inset p-2 bg-white">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-2">Most reliable entries</div>
+                                ${[...filteredData].sort((a,b)=>computeConfidence(b).confidence - computeConfidence(a).confidence).slice(0,5).map(it => miniRow(it, `Conf reasons: ${computeConfidence(it).reasons.slice(0,2).join(' • ')}`)).join('')}
+                            </div>
+                            <div class="win95-inset p-2 bg-white">
+                                <div class="text-[10px] uppercase font-bold text-gray-600 mb-2">Incomplete / low-support warnings</div>
+                                ${[...filteredData].sort((a,b)=>computeConfidence(a).confidence - computeConfidence(b).confidence).slice(0,5).map(it => miniRow(it, `Warnings: ${computeConfidence(it).reasons.slice(0,3).join(' • ')}`)).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="win95-window p-2 md:col-span-2">
+                        <div class="win95-title-bar bg-orange-700"><span>8) Area Comparison (from dataset)</span></div>
+                        <div class="p-2 grid grid-cols-1 md:grid-cols-5 gap-2">
+                            ${areaStats.map(s => `
+                                <div class="win95-inset p-2 bg-white">
+                                    <div class="text-[10px] uppercase font-bold text-gray-600">${s.area}</div>
+                                    <div class="text-xl font-black text-orange-800">${s.count}</div>
+                                    <div class="text-[10px] text-gray-700">Avg rating: <b>${s.avgRating || '-'}</b></div>
+                                    <div class="text-[10px] text-gray-700">Avg price: <b>${s.avgPrice ? s.avgPrice + '฿' : '-'}</b></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="p-2 text-[9px] text-gray-600">
+                            หมายเหตุ: การจัดกลุ่มพื้นที่ใช้ข้อความ “ย่าน” ใน dataset เท่านั้น (ไม่ใช้ geocoding)
+                        </div>
+                    </div>
+
+                    <div class="win95-window p-2 md:col-span-2">
+                        <div class="win95-title-bar bg-blue-800"><span>9) Smart Recommendation Summary (dataset-only conclusion)</span></div>
+                        <div class="p-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            ${safestOverall ? miniRow(safestOverall, `<b>Safest overall:</b> reviews สูงสุดในผลลัพธ์ → confidence สูงกว่า`) : ``}
+                            ${bestValuePick ? miniRow(bestValuePick, `<b>Best value:</b> value-per-baht สูงสุด (proxy)`) : ``}
+                            ${premiumPick ? miniRow(premiumPick, `<b>Best premium (by price):</b> ราคา/คนสูงสุดในผลลัพธ์ → ต้องดู trade-off กับ base_score`) : ``}
+                            ${bestLargePick ? miniRow(bestLargePick, `<b>Best large-team (proxy):</b> large scenario score สูงสุด`) : ``}
+                            ${bestForWorkPick ? miniRow(bestForWorkPick, `<b>Conversation-friendly (proxy):</b> work scenario score สูงสุด (ไม่มีข้อมูล noise/Wi‑Fi/space)`) : ``}
+                        </div>
+                    </div>
+                </div>
             `;
         }
 
