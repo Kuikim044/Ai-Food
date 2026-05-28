@@ -323,13 +323,13 @@
             const initialDataString = JSON.stringify(rawData);
             const initialCount = rawData.length;
             
-            showLoading(true, "กำลังส่งสัญญาณเริ่มรันระบบ Scrape ไปยัง n8n...", 5);
+            showLoading(true, "กำลังยิงสัญญาณเพื่อเริ่มระบบ Scrape ใน n8n...", 10);
             
-            let triggeredSuccessfully = false;
             try {
-                // ส่ง POST request ไปยัง n8n Webhook
-                const response = await fetch(N8N_WEBHOOK_URL, {
+                // ส่ง POST request ด้วยโหมด no-cors เพื่อป้องกันปัญหา CORS block และเลี่ยงการยิงคำสั่งซ้ำซ้อน
+                await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         action: 'start_scrape', 
@@ -338,105 +338,68 @@
                     })
                 });
 
-                if (response.ok) {
-                    triggeredSuccessfully = true;
-                } else {
-                    throw new Error(`n8n Webhook ตอบกลับด้วยรหัสข้อผิดพลาด: ${response.status} (${response.statusText})`);
-                }
+                // การยิง no-cors จะสำเร็จเสมอหากเซิร์ฟเวอร์เปิดอยู่ (ไม่โยน CORS error)
+                // เข้าสู่กระบวนการเฝ้าจับตาดู Google Sheet (Polling) ทันที
+                await runPollingProcess(initialDataString, initialCount);
             } catch (e) {
                 console.error("Fetch Error:", e);
-                
-                // หากการดึงข้อมูลล้มเหลว (เช่น CORS block หรือเซิร์ฟเวอร์ออฟไลน์)
-                let errorMsg = "ไม่สามารถเชื่อมต่อระบบ Scrap ของ n8n ได้";
-                let errorDesc = "สัญญาณการเชื่อมต่อถูกตัดขาด หรือเซิร์ฟเวอร์ n8n ไม่พร้อมใช้งานในขณะนี้ กรุณาเปิดระบบ n8n หรือตรวจสอบลิงก์ Webhook อีกครั้ง";
-                
-                // เช็คกรณีที่เป็นไปได้ว่าเกิดจาก CORS block
-                if (e.name === 'TypeError' && e.message.includes('Failed to fetch')) {
-                    errorDesc = "เกิดข้อผิดพลาดในการดึงข้อมูลหรือติดนโยบาย CORS ของเบราว์เซอร์ แต่คำสั่งอาจถูกส่งไปถึง n8n แล้ว! เพื่อความแน่นอน คุณสามารถลองส่งคำสั่งโดยตรงแบบเลี่ยง CORS (Bypass CORS) ได้จากปุ่มด้านล่าง";
-                }
-                
                 showLoading(false);
                 showWin95Alert(
                     "System Connection Error",
-                    errorMsg,
-                    errorDesc,
+                    "ไม่สามารถยิงคำสั่งเริ่ม Scrape ไปยัง n8n ได้",
+                    "ตรวจพบปัญหาทางเครือข่ายอย่างรุนแรง ไม่สามารถเข้าถึงเซิร์ฟเวอร์ n8n ได้ กรุณาตรวจสอบว่าเซิร์ฟเวอร์ n8n กำลังเปิดใช้งานอยู่ หรือลิ้งก์ Webhook ถูกต้องหรือไม่",
                     true, // Is error
-                    e.toString(),
-                    async () => {
-                        closeWin95Alert();
-                        await triggerScrapeNoCors(initialDataString, initialCount);
-                    }
-                );
-                return;
-            }
-
-            if (triggeredSuccessfully) {
-                // เริ่มกระบวนการ Polling และแสดงผลหน้าจอโหลดอย่างต่อเนื่อง
-                await runPollingProcess(initialDataString, initialCount, "ปกติ");
-            }
-        }
-
-        async function triggerScrapeNoCors(initialDataString, initialCount) {
-            showLoading(true, "กำลังยิงคำสั่งแบบเลี่ยง CORS (no-cors) ไปยัง n8n...", 5);
-            try {
-                await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'start_scrape', 
-                        timestamp: new Date(), 
-                        source: 'AI_FOOD_DASHBOARD_BYPASS' 
-                    })
-                });
-
-                // การยิง no-cors สำเร็จ จะไม่มี error เด้ง ดังนั้นเราก็รัน Polling ต่อเนื่องได้เลย!
-                await runPollingProcess(initialDataString, initialCount, "Bypass CORS");
-            } catch (e) {
-                showLoading(false);
-                showWin95Alert(
-                    "Critical Error",
-                    "ระบบล้มเหลวโดยสิ้นเชิง",
-                    "ไม่สามารถติดต่อเซิร์ฟเวอร์ได้เลย แม้จะลองใช้โหมดเลี่ยง CORS แล้ว กรุณาตรวจสอบอินเทอร์เน็ตหรือสถานะการทำงานของ n8n",
-                    true,
                     e.toString()
                 );
             }
         }
 
-        async function runPollingProcess(initialDataString, initialCount, modeText) {
+        async function runPollingProcess(initialDataString, initialCount) {
             let elapsedSeconds = 0;
             const maxSeconds = 90; // รอสูงสุด 90 วินาที
-            let progress = 10;
+            let progress = 15;
             
-            showLoading(true, `เริ่มกระบวนการ Scrape [โหมด: ${modeText}]... (0/${maxSeconds} วินาที)`, progress);
+            showLoading(true, `เริ่มกระบวนการ Scrape... (0/${maxSeconds} วินาที)`, progress);
             
             const pollInterval = setInterval(async () => {
                 elapsedSeconds += 5;
                 
-                // คำนวณความคืบหน้าแบบสโลว์ๆ (ไต่ระดับไปจนถึง 95%)
-                progress = Math.min(95, 10 + Math.round((elapsedSeconds / maxSeconds) * 85));
+                // คำนวณความคืบหน้าแบบสโลว์ๆ (ไต่ระดับไปจนถึง 92%)
+                progress = Math.min(92, 15 + Math.round((elapsedSeconds / maxSeconds) * 77));
                 
                 showLoading(
                     true, 
-                    `กำลังดำเนินการ Scrape ข้อมูลในระบบ n8n... (ผ่านไป ${elapsedSeconds}/${maxSeconds} วินาที)\nระบบจะประมวลผลและอัปเดตข้อมูลอัตโนมัติทันทีเมื่อข้อมูลใหม่บันทึกลง Google Sheet เรียบร้อย`, 
+                    `กำลังดำเนินการ Scrape ข้อมูลในระบบ n8n... (ผ่านไป ${elapsedSeconds}/${maxSeconds} วินาที)\nระบบจะเฝ้าตรวจจับแผ่นงาน Google Sheet และนำมาวิเคราะห์โดยอัตโนมัติเมื่อเสร็จสิ้น`, 
                     progress
                 );
                 
-                // ตรวจสอบ Google Sheet เพื่อดูข้อมูลใหม่
+                // ตรวจสอบ Google Sheet เพื่อดูข้อมูลใหม่ (ใช้ Timestamp เพื่อแก้ปัญหา Cache ของ opensheet.elk.sh)
                 try {
-                    const response = await fetch(API_URL);
+                    const response = await fetch(`${API_URL}?t=${Date.now()}`);
                     if (response.ok) {
                         const json = await response.json();
                         const currentFetchedData = json.value || json;
                         const currentDataString = JSON.stringify(currentFetchedData);
                         
-                        // ถ้าระดับข้อมูลไม่เท่าเดิม หรือมีอะไรใน JSON ต่างออกไป แปลว่าอัปเดตแล้ว!
+                        // ถ้าระดับข้อมูลไม่เท่าเดิม หรือมีอะไรใน JSON ต่างออกไป แปลว่าเริ่มมีข้อมูลใหม่แล้ว!
                         if (currentDataString !== initialDataString || currentFetchedData.length !== initialCount) {
                             clearInterval(pollInterval);
                             
-                            // นำเข้าข้อมูลใหม่
-                            rawData = currentFetchedData;
+                            // จัดเตรียมสเตทข้อมูลใหม่และโหลดรอคูลดาวน์ให้เขียนเสร็จ
+                            showLoading(true, "ตรวจพบข้อมูลใหม่ใน Google Sheet! กำลังจัดทำดัชนีและวิเคราะห์ AI... (10 วินาที)", 96);
+                            
+                            // รออีก 10 วินาทีเพื่อให้ n8n เขียนข้อมูลแถวที่เหลือทั้งหมดลงแผ่นชีตจนเสร็จเรียบร้อย
+                            await new Promise(resolve => setTimeout(resolve, 10000));
+                            
+                            // ดึงข้อมูลเวอร์ชันสมบูรณ์ที่สุด
+                            try {
+                                const finalResp = await fetch(`${API_URL}?t=${Date.now()}`);
+                                const finalJson = await finalResp.json();
+                                rawData = finalJson.value || finalJson;
+                            } catch (err) {
+                                rawData = currentFetchedData;
+                            }
+                            
                             processData();
                             applyAllFilters();
                             document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
@@ -449,7 +412,7 @@
                                 showWin95Alert(
                                     "Scrape & Update Success",
                                     "✨ อัปเดตข้อมูลสำเร็จโดยอัตโนมัติ!",
-                                    `ระบบ AI ได้ทำการนำเข้าร้านอาหารใหม่ทั้งหมดเรียบร้อยแล้ว (จำนวนร้านปัจจุบัน: ${rawData.length} ร้าน) และประมวลผลคะแนน AI Decision Scoring 2.0 ใหม่เรียบร้อยแล้วครับ!`,
+                                    `ระบบ AI ได้อัปเดตนำเข้าร้านอาหารใหม่เรียบร้อยแล้ว (จำนวนร้านปัจจุบัน: ${rawData.length} ร้าน) และประมวลผลคะแนน AI Decision Scoring 2.0 ใหม่เรียบร้อยแล้วครับ!`,
                                     false
                                 );
                             }, 1500);
@@ -466,7 +429,7 @@
                     
                     // ทำการโหลดข้อมูลล่าสุดอีกครั้งเพื่อความแน่ใจ
                     try {
-                        const response = await fetch(API_URL);
+                        const response = await fetch(`${API_URL}?t=${Date.now()}`);
                         const json = await response.json();
                         rawData = json.value || json;
                         processData();
@@ -476,13 +439,13 @@
                         console.error("Final poll refresh failed:", e);
                     }
                     
-                    showLoading(true, "หมดเวลารอระบบ (Timeout)... กำลังเปิดหน้าแผงควบคุมหลัก", 100);
+                    showLoading(true, "สิ้นสุดช่วงเวลาเฝ้ารอ... กำลังประมวลผลข้อมูลล่าสุด", 100);
                     setTimeout(() => {
                         showLoading(false);
                         showWin95Alert(
-                            "Time Out",
+                            "Scrape Completed",
                             "⏱️ สิ้นสุดช่วงเวลาเฝ้ารอข้อมูล",
-                            `ระบบใช้เวลาเกิน ${maxSeconds} วินาทีแล้ว คาดว่าระบบกำลังทยอยบันทึกข้อมูล หรืออาจจะรันเสร็จในไม่ช้า เราได้รีเฟรชหน้าบอร์ดล่าสุดไว้ให้คุณแล้ว (จำนวนร้านปัจจุบัน: ${rawData.length} ร้าน) คุณสามารถตรวจสอบสถานะจริงใน n8n Executions ของคุณได้ครับ`,
+                            `ระบบทำงานครบเวลา ${maxSeconds} วินาทีแล้ว เราได้รีเฟรชนำข้อมูลล่าสุดมาแสดงผลและประมวลผลให้เรียบร้อยแล้ว (จำนวนร้านปัจจุบัน: ${rawData.length} ร้าน) คุณสามารถใช้งานระบบต่อได้ทันทีครับ`,
                             false
                         );
                     }, 1500);
@@ -945,26 +908,6 @@
 
             // 1. ตรวจจับคำระบุชื่อร้านค้าเจาะจง
             const nameMatch = processedData.find(i => msg.includes(i.name.toLowerCase()));
-            if (nameMatch) {
-                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(nameMatch.name + ' ราคา เมนู')}`;
-                const priceText = nameMatch.isEstimatedPrice 
-                    ? `~${nameMatch.price}฿/คน (AI ประมาณการ) <a href="${searchUrl}" target="_blank" class="text-blue-500 underline text-[9px]">🔍 ค้นหาเมนู</a>`
-                    : `${nameMatch.price}฿/คน`;
-
-                return `
-                    🤖 <b>พบข้อมูลร้าน "${nameMatch.name}" ในระบบครับ:</b><br><br>
-                    📍 <b>ย่าน:</b> ${nameMatch.area}<br>
-                    🍲 <b>ประเภท:</b> ${nameMatch.category}<br>
-                    ⭐ <b>คะแนนเฉลี่ย:</b> ${nameMatch.rating} ดาว (${nameMatch.reviews} รีวิว)<br>
-                    💰 <b>ราคาโดยประมาณ:</b> ${priceText}<br>
-                    🎯 <b>คะแนนความคุ้มค่า AI:</b> ${nameMatch.base_score}%<br>
-                    💡 <b>จุดเด่นจาก AI:</b> ${nameMatch.pros}<br><br>
-                    <div class="flex gap-2 mt-2">
-                        <a href="${nameMatch.map}" target="_blank" class="win95-button text-[9px] font-bold text-center inline-block py-0.5 px-2">🗺️ เปิดแผนที่</a>
-                        <a href="${nameMatch.source}" target="_blank" class="win95-button text-[9px] text-center inline-block py-0.5 px-2">🌐 ดูข้อมูลร้าน</a>
-                    </div>
-                `;
-            }
 
             // 2. ตรวจจับตัวกรองพื้นที่
             const areas = {
@@ -1001,6 +944,46 @@
                 }
             }
 
+            // 4. ตรวจความเหมาะสมเพื่อสกัดกั้นการพูดคุยทั่วไป (Chatter Deflection)
+            const hasLocation = matchedArea !== null;
+            const hasCategory = matchedCategory !== null;
+            const hasName = nameMatch !== undefined;
+            const isRecommendQuery = msg.includes('แนะนำ') || msg.includes('มีร้าน') || msg.includes('หาร้าน') || msg.includes('ไหนดี') || msg.includes('บอกหน่อย') || msg.includes('หาให้');
+            
+            // กรองประโยคพูดคุยทั่วไป เช่น "กินข้าวยัง" "อากาศดีนะ" "ทำอะไรอยู่"
+            if (!hasLocation && !hasCategory && !hasName && !isRecommendQuery) {
+                return `
+                    🤖 ขออภัยครับ ผมเป็น <b>AI Food Assistant</b> ที่ถูกจำกัดสิทธิ์ให้ตอบคำถามและค้นหาข้อมูลเฉพาะ <b>ร้านอาหารในระบบเท่านั้น</b> ครับ<br><br>
+                    ผมไม่สามารถพูดคุยคุยเล่นทั่วไป สานสัมพันธ์ หรือตอบคำถามอื่นใดนอกเหนือจากข้อมูลร้านอาหารในระบบได้ครับ<br><br>
+                    ลองถามข้อมูลร้านอาหารด้วยคีย์เวิร์ดที่เป็นรูปธรรม เช่น:<br>
+                    • <i>"มีร้านชาบูแนะนำไหม"</i><br>
+                    • <i>"แนะนำร้านคาเฟ่ย่านสยาม"</i><br>
+                    • <i>"ค้นหาร้านประหยัดอารีย์"</i>
+                `;
+            }
+
+            // ถ้าผ่านด่านการตรวจสอบทั่วไปมาได้:
+            if (nameMatch) {
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(nameMatch.name + ' ราคา เมนู')}`;
+                const priceText = nameMatch.isEstimatedPrice 
+                    ? `~${nameMatch.price}฿/คน (AI ประมาณการ) <a href="${searchUrl}" target="_blank" class="text-blue-500 underline text-[9px]">🔍 ค้นหาเมนู</a>`
+                    : `${nameMatch.price}฿/คน`;
+
+                return `
+                    🤖 <b>พบข้อมูลร้าน "${nameMatch.name}" ในระบบครับ:</b><br><br>
+                    📍 <b>ย่าน:</b> ${nameMatch.area}<br>
+                    🍲 <b>ประเภท:</b> ${nameMatch.category}<br>
+                    ⭐ <b>คะแนนเฉลี่ย:</b> ${nameMatch.rating} ดาว (${nameMatch.reviews} รีวิว)<br>
+                    💰 <b>ราคาโดยประมาณ:</b> ${priceText}<br>
+                    🎯 <b>คะแนนความคุ้มค่า AI:</b> ${nameMatch.base_score}%<br>
+                    💡 <b>จุดเด่นจาก AI:</b> ${nameMatch.pros}<br><br>
+                    <div class="flex gap-2 mt-2">
+                        <a href="${nameMatch.map}" target="_blank" class="win95-button text-[9px] font-bold text-center inline-block py-0.5 px-2">🗺️ เปิดแผนที่</a>
+                        <a href="${nameMatch.source}" target="_blank" class="win95-button text-[9px] text-center inline-block py-0.5 px-2">🌐 ดูข้อมูลร้าน</a>
+                    </div>
+                `;
+            }
+
             // 4. ตรวจเจตนาด้านราคา (งบประมาณ)
             const isCheapQuery = msg.includes('ถูก') || msg.includes('ประหยัด') || msg.includes('คุ้ม') || msg.includes('ไม่แพง') || msg.includes('ราคาเบา');
             const isExpensiveQuery = msg.includes('แพง') || msg.includes('หรู') || msg.includes('พิเศษ') || msg.includes('premium') || msg.includes('ดีๆ');
@@ -1023,19 +1006,14 @@
 
             // จัดการคัดแยกราคา
             if (isCheapQuery) {
-                // เน้นความประหยัด เรียงจากถูกไปแพง
                 matches = matches.filter(i => i.price <= 450).sort((a, b) => a.price - b.price);
             } else if (isExpensiveQuery) {
-                // เน้นความหรูหรา
                 matches = matches.filter(i => i.price > 450).sort((a, b) => b.price - a.price);
             } else {
-                // เรียงตาม AI base_score
                 matches = matches.sort((a, b) => b.base_score - a.base_score);
             }
 
-            // หากมีร้านค้าตรงเงื่อนไข
             if (matches.length > 0) {
-                // ดึงผลลัพธ์สูงสุด 3 ร้านตามที่ผู้ใช้ขอ
                 const topMatches = matches.slice(0, 3);
                 
                 let titleText = "✨ <b>ร้านอาหารแนะนำที่ดีที่สุดตามเงื่อนไขของคุณครับ:</b>";
@@ -1073,7 +1051,6 @@
                     `;
                 });
 
-                // หากมีผลลัพธ์มากกว่า 3 ตัว แจ้งผู้ใช้เพิ่มเติม
                 if (matches.length > 3) {
                     listHtml += `<p class="text-[10px] text-gray-500 italic text-right mt-1">*ยังมีร้านค้าอื่นตรงเงื่อนไขอีก ${matches.length - 3} ร้านที่แผงควบคุมหลัก</p>`;
                 }
@@ -1081,7 +1058,6 @@
                 return listHtml;
             }
 
-            // คำตอบสุภาพเมื่อไม่พบผลลัพธ์ตรงกัน
             let failText = "ขออภัยครับ ผมไม่พบร้านอาหารในฐานข้อมูลที่ตรงกับเงื่อนไขนั้นเลยครับ 😅<br><br>";
             failText += "ลองเปลี่ยนรูปแบบคำถามเป็นคำสำคัญที่กระชับ เช่น:<br>";
             failText += "• <i>'ร้านอาหารย่านสยาม'</i> (ระบุย่าน)<br>";
