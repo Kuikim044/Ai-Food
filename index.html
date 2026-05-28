@@ -900,6 +900,25 @@
         }
 
         function renderTable() {
+    document.getElementById('table-body').innerHTML = filteredData.map((item, idx) => {
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + ' ราคา เมนู')}`;
+        const priceHtml = item.isEstimatedPrice
+            ? `<span class="text-green-700 font-bold" title="ราคาประมาณการโดย AI">${item.display_price}</span>
+               <a href="${searchUrl}" target="_blank" title="ค้นหาเมนูและราคาจริงใน Google" class="ml-1 text-blue-500 hover:text-blue-700 text-[10px]">🔍</a>`
+            : `<span class="text-green-800 font-bold">${item.display_price}</span>`;
+        return `
+            <tr class="hover:bg-blue-50 border-b border-gray-300 cursor-pointer" onclick="showDetail(${idx})">
+                <td class="p-2 font-bold">${item.name}</td>
+                <td class="p-2 text-center">${priceHtml}</td>
+                <td class="p-2 text-center font-bold text-blue-700">${item.rating} <span class="text-[8px] font-normal text-gray-500">(${item.reviews})</span></td>
+                <td class="p-2 text-center font-black text-gray-700">${item.base_score}</td>
+                <td class="p-2"><span class="badge bg-gray-100">${item.category}</span></td>
+                <td class="p-2 text-[10px]">${item.area}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
             document.getElementById('table-body').innerHTML = filteredData.map(item => {
                 const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + ' ราคา เมนู')}`;
                 const priceHtml = item.isEstimatedPrice 
